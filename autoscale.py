@@ -18,7 +18,7 @@ marathon_apps=[]
 def get_all_apps(marathon_host):
     response=requests.get('http://' + marathon_host+ '/marathon/v2/apps').json()
     if response['apps'] ==[]:
-        print 'No Apps Found on Marathon !'
+        print ('No Apps Found on Marathon !')
     else:
         for i in response['apps']:
             appid=i['id'].strip('/')
@@ -29,33 +29,33 @@ def get_app_details(marathon_host,marathon_app):
     response=requests.get('http://' + marathon_host+ '/marathon/v2/apps/'+ marathon_app).json()
     #print response
     if (response['app']['tasks'] ==[]):
-        print 'No taks data on Marathon for App !', marathon_app
+        print ('No taks data on Marathon for App !', marathon_app)
     else:
         app_task_dict={}
         for i in response['app']['tasks']:
             taskid=i['id']
-            print 'taskId=',taskid
+            print ('taskId=',taskid)
             hostid=i['host']
-            print 'hostId=', hostid
+            print ('hostId=', hostid)
             app_task_dict[str(taskid)]=str(hostid)
         return app_task_dict
 
 def get_agent_metrics(task,host):
     response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
-    print 'getting Metrics for Host =',host
-    print response
+    print ('getting Metrics for Host =',host)
+    print (response)
 
 
 
 if __name__ == "__main__":
     app_exists = get_all_apps(marathon_host)
     if (app_exists == True):
-        print "Found your Marathon App=",marathon_app
+        print ("Found your Marathon App=",marathon_app)
     else:
-        print "Could not find your App =",marathon_app
+        print ("Could not find your App =",marathon_app)
         sys.exit(1)
 
     app_task_dict=get_app_details(marathon_host, marathon_app)
-    print app_task_dict
+    print (app_task_dict)
     for task,host in app_task_dict.items():
         get_agent_metrics(task,host)
