@@ -43,6 +43,10 @@ def get_agent_metrics(task,host):
     for i in response:
         executor_id=i['executor_id']
         print("Printing each Executor ID ",executor_id)
+        if (executor_id == task):
+            task_stats =response[executor_id].['statistics']
+            print ('****Specific stats for task',executor_id,'=',task_stats)
+
     print (response)
 
 
