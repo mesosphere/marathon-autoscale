@@ -12,8 +12,6 @@ marathon_app = input("Enter the Marathon Application Name to Configure Autoscale
 # trigger_mode = input("Enter which metric(s) to trigger Autoscale (and / or) : ")
 # autoscale_multiplier = input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : ")
 
-
-
 def get_all_apps(marathon_host):
     response=requests.get('http://' + marathon_host+ '/marathon/v2/apps').json()
     if response['apps'] ==[]:
@@ -42,6 +40,9 @@ def get_app_details(marathon_host,marathon_app):
 def get_agent_metrics(task,host):
     response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
     print ('getting Mesos Metrics for Mesos Agent =',host)
+    for i in response:
+        executor_id=i['executor_id']
+        print("Printing each Executor ID ",executor_id)
     print (response)
 
 
@@ -57,5 +58,6 @@ if __name__ == "__main__":
 
     app_task_dict=get_app_details(marathon_host, marathon_app)
     print (app_task_dict)
+
     for task,host in app_task_dict.items():
         get_agent_metrics(task,host)
