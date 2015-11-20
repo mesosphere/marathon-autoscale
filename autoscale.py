@@ -37,7 +37,7 @@ def get_app_details(marathon_host,marathon_app):
             app_task_dict[str(taskid)]=str(hostid)
         return app_task_dict
 
-def get_agent_metrics(task,host):
+def get_task_agentstatistics(task,host):
     response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
     print ('getting Mesos Metrics for Mesos Agent =',host)
     for i in response:
@@ -45,10 +45,8 @@ def get_agent_metrics(task,host):
         print("Printing each Executor ID ",executor_id)
         if (executor_id == task):
             task_stats =i['statistics']
-            print ('****Specific stats for task',executor_id,'=',task_stats)
-
-    print (response)
-
+            # print ('****Specific stats for task',executor_id,'=',task_stats)
+            return task_stats
 
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
@@ -64,4 +62,5 @@ if __name__ == "__main__":
     print (app_task_dict)
 
     for task,host in app_task_dict.items():
-        get_agent_metrics(task,host)
+        task_stats=get_task_agentstatistics(task,host)
+        print ('Found Task',task,'on host',host,'with stats',task_stats)
