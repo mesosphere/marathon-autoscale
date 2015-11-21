@@ -6,9 +6,9 @@ import json
 
 marathon_host = 'thomaskra-elasticl-1114imswizjvw-1820440244.us-east-1.elb.amazonaws.com'
 # marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
-marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
-# max_mem_percent = input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
-# max_cpu_percent = input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
+marathon_app = raw_input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
+# trigger_mem_percent = input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
+# trigger_cpu_percent = input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
 # trigger_mode = input("Enter which metric(s) to trigger Autoscale (and / or) : ")
 # autoscale_multiplier = input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : ")
 
@@ -38,14 +38,14 @@ def get_app_details(marathon_host,marathon_app):
         return app_task_dict
 
 def get_task_agentstatistics(task,host):
-    response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
+    response=requests.get('http://localhost:8000/sample-mesos-statistics.json').json()
     print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',host)
     for i in response:
         executor_id=i['executor_id']
         print("DEBUG -- Printing each Executor ID ",executor_id)
         if (executor_id == task):
             task_stats =i['statistics']
-            # print ('****Specific stats for task',executor_id,'=',task_stats)
+            print ('****Specific stats for task for', marathon_app,executor_id,'=',task_stats)
             return task_stats
 
 if __name__ == "__main__":

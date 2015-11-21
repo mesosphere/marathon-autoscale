@@ -1,0 +1,113 @@
+[
+  {
+    "executor_id": "sleep.039e4236-8f7f-11e5-abe6-02427e82b3c4",
+    "executor_name": "Command Executor (Task: sleep.039e4236-8f7f-11e5-abe6-02427e82b3c4) (Command: sh -c 'env && sleep...')",
+    "framework_id": "20151117-183014-3389390858-5050-2326-0000",
+    "source": "sleep.039e4236-8f7f-11e5-abe6-02427e82b3c4",
+    "statistics": {
+      "cpus_limit": 0.2,
+      "cpus_system_time_secs": 1.32,
+      "cpus_user_time_secs": 2.11,
+      "mem_anon_bytes": 10817536,
+      "mem_cache_bytes": 8192,
+      "mem_critical_pressure_counter": 0,
+      "mem_file_bytes": 8192,
+      "mem_limit_bytes": 50331648,
+      "mem_low_pressure_counter": 0,
+      "mem_mapped_file_bytes": 0,
+      "mem_medium_pressure_counter": 0,
+      "mem_rss_bytes": 10817536,
+      "mem_swap_bytes": 0,
+      "mem_total_bytes": 10825728,
+      "mem_unevictable_bytes": 0,
+      "timestamp": 1448027812.49046
+    }
+  },
+  {
+    "executor_id": "sleep.039e6947-8f7f-11e5-abe6-02427e82b3c4",
+    "executor_name": "Command Executor (Task: sleep.039e6947-8f7f-11e5-abe6-02427e82b3c4) (Command: sh -c 'env && sleep...')",
+    "framework_id": "20151117-183014-3389390858-5050-2326-0000",
+    "source": "sleep.039e6947-8f7f-11e5-abe6-02427e82b3c4",
+    "statistics": {
+      "cpus_limit": 0.2,
+      "cpus_system_time_secs": 1.28,
+      "cpus_user_time_secs": 2.06,
+      "mem_anon_bytes": 2449408,
+      "mem_cache_bytes": 4096,
+      "mem_critical_pressure_counter": 0,
+      "mem_file_bytes": 4096,
+      "mem_limit_bytes": 50331648,
+      "mem_low_pressure_counter": 0,
+      "mem_mapped_file_bytes": 0,
+      "mem_medium_pressure_counter": 0,
+      "mem_rss_bytes": 2449408,
+      "mem_swap_bytes": 0,
+      "mem_total_bytes": 2453504,
+      "mem_unevictable_bytes": 0,
+      "timestamp": 1448027812.49047
+    }
+  },
+  {
+    "executor_id": "kubernetes.24e3fb7d-8eba-11e5-abe6-02427e82b3c4",
+    "executor_name": "Command Executor (Task: kubernetes.24e3fb7d-8eba-11e5-abe6-02427e82b3c4) (Command: NO EXECUTABLE)",
+    "framework_id": "20151117-183014-3389390858-5050-2326-0000",
+    "source": "kubernetes.24e3fb7d-8eba-11e5-abe6-02427e82b3c4",
+    "statistics": {
+      "cpus_limit": 1.1,
+      "cpus_system_time_secs": 68.34,
+      "cpus_user_time_secs": 243.75,
+      "mem_limit_bytes": 838860800,
+      "mem_rss_bytes": 146259968
+    }
+  },
+  {
+    "executor_id": "simple-docker-example.522a84aa-8d7b-11e5-abe6-02427e82b3c4",
+    "executor_name": "Command Executor (Task: simple-docker-example.522a84aa-8d7b-11e5-abe6-02427e82b3c4) (Command: sh -c 'python3 -m h...')",
+    "framework_id": "20151117-183014-3389390858-5050-2326-0000",
+    "source": "simple-docker-example.522a84aa-8d7b-11e5-abe6-02427e82b3c4",
+    "statistics": {
+      "cpus_limit": 0.6,
+      "cpus_system_time_secs": 0.14,
+      "cpus_user_time_secs": 0.93,
+      "mem_limit_bytes": 67108864,
+      "mem_rss_bytes": 12423168
+    }
+  },
+  {
+    "executor_id": "apacheftp-java-docker.9ed60e12-8d70-11e5-abe6-02427e82b3c4",
+    "executor_name": "Command Executor (Task: apacheftp-java-docker.9ed60e12-8d70-11e5-abe6-02427e82b3c4) (Command: sh -c 'cd /opt/apac...')",
+    "framework_id": "20151117-183014-3389390858-5050-2326-0000",
+    "source": "apacheftp-java-docker.9ed60e12-8d70-11e5-abe6-02427e82b3c4",
+    "statistics": {
+      "cpus_limit": 1.1,
+      "cpus_system_time_secs": 3.79,
+      "cpus_user_time_secs": 11.82,
+      "mem_limit_bytes": 1107296256,
+      "mem_rss_bytes": 158580736
+    }
+  },
+  {
+    "executor_id": "basic-0.a8673e43-8d70-11e5-abe6-02427e82b3c4",
+    "executor_name": "Command Executor (Task: basic-0.a8673e43-8d70-11e5-abe6-02427e82b3c4) (Command: sh -c 'while [ true...')",
+    "framework_id": "20151117-183014-3389390858-5050-2326-0000",
+    "source": "basic-0.a8673e43-8d70-11e5-abe6-02427e82b3c4",
+    "statistics": {
+      "cpus_limit": 0.2,
+      "cpus_system_time_secs": 51.7,
+      "cpus_user_time_secs": 44.64,
+      "mem_anon_bytes": 3956736,
+      "mem_cache_bytes": 704512,
+      "mem_critical_pressure_counter": 0,
+      "mem_file_bytes": 704512,
+      "mem_limit_bytes": 44040192,
+      "mem_low_pressure_counter": 0,
+      "mem_mapped_file_bytes": 0,
+      "mem_medium_pressure_counter": 0,
+      "mem_rss_bytes": 3956736,
+      "mem_swap_bytes": 0,
+      "mem_total_bytes": 4661248,
+      "mem_unevictable_bytes": 0,
+      "timestamp": 1448027812.49053
+    }
+  }
+]
