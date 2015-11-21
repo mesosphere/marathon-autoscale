@@ -24,7 +24,7 @@ def get_all_apps(marathon_host):
 
 def get_app_details(marathon_host,marathon_app):
     response=requests.get('http://' + marathon_host+ '/marathon/v2/apps/'+ marathon_app).json()
-    #print response
+    # Get the Marathon App detailed json for the marathon_app specified
     if (response['app']['tasks'] ==[]):
         print ('No taks data on Marathon for App !', marathon_app)
     else:
@@ -38,6 +38,9 @@ def get_app_details(marathon_host,marathon_app):
         return app_task_dict
 
 def get_task_agentstatistics(task,host):
+    # Get the performance Metrics for all the tasks for the Marathon App specified
+    # by connecting to the Mesos Agent and then making a REST call against Mesos statistics
+    # Return to Statistics for the specific task for the marathon_app
     response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
     print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',host)
     for i in response:
@@ -50,7 +53,7 @@ def get_task_agentstatistics(task,host):
 
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
-    marathon_apps=[]
+    # Test that the MArathon app specified actually exists in Marathon
     app_exists = get_all_apps(marathon_host)
     if (app_exists == True):
         print ("Found your Marathon App=",marathon_app)
@@ -62,13 +65,13 @@ if __name__ == "__main__":
     # performing the Mesos /statistics REST call on the agent where the task lives
     app_task_dict=get_app_details(marathon_host, marathon_app)
     print ("Printing app task dictionary for", marathon_app,"==",app_task_dict)
-
+    # Initialize a List to store all the CPU & Mem values for the task as collected by task_stats function
     app_cpu_values=[]
     app_mem_values=[]
     for task,host in app_task_dict.items():
         task_stats=get_task_agentstatistics(task,host)
         cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
-        print (cpus_time)
+        print ("Combined Task CPU Kernel and User Time", cpus_time)
         mem_rss_bytes = int(task_stats['mem_rss_bytes'])
         print ('task mem_rss_bytes',mem_rss_bytes)
         mem_limit_bytes = int(task_stats['mem_limit_bytes'])
@@ -83,6 +86,5 @@ if __name__ == "__main__":
     print ('Average CPU Time for app', marathon_app,'=', app_avg_cpu)
     app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
     print ('Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
-    print (app_avg_mem)
     print("Successfully completed program...")
     sys.exit(0)

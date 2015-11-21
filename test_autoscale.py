@@ -68,7 +68,7 @@ if __name__ == "__main__":
     for task,host in app_task_dict.items():
         task_stats=get_task_agentstatistics(task,host)
         cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
-        print cpus_time
+        print (cpus_time)
         mem_rss_bytes = int(task_stats['mem_rss_bytes'])
         print ('task mem_rss_bytes',mem_rss_bytes)
         mem_limit_bytes = int(task_stats['mem_limit_bytes'])
@@ -83,6 +83,5 @@ if __name__ == "__main__":
     print ('Average CPU Time for app', marathon_app,'=', app_avg_cpu)
     app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
     print ('Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
-    print app_avg_mem
     print("Successfully completed program...")
     sys.exit(0)
