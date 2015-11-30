@@ -8,9 +8,9 @@ import pprint
 marathon_host = 'thomaskra-elasticl-1j8f6oyu2cidt-1044133857.us-east-1.elb.amazonaws.com'
 # marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
 marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
-# max_mem_percent = input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
-# max_cpu_percent = input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
-# trigger_mode = input("Enter which metric(s) to trigger Autoscale (and / or) : ")
+max_mem_percent = input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
+max_cpu_time = input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
+trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
 # autoscale_multiplier = input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : ")
 
 class marathon(object):
@@ -61,6 +61,9 @@ def get_task_agentstatistics(task,host):
             # print ('****Specific stats for task',executor_id,'=',task_stats)
             return task_stats
 
+
+
+
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
 
@@ -103,6 +106,17 @@ if __name__ == "__main__":
     print ('Average CPU Time for app', marathon_app,'=', app_avg_cpu)
     app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
     print ('Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
+
+    if (trigger_mode=="and"):
+        if all(app_avg_cpu > max_cpu_time, app_avg_mem > max_mem_percent):
+            print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
+
+
+    elif (trigger_mode=="or"):
+         if any(app_avg_cpu > max_cpu_time, app_avg_mem > max_mem_percent):
+            print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
+
+    else:
 
 
     print("Successfully completed program...")
