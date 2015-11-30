@@ -12,13 +12,13 @@ The python program runs on any system that has Python3 installed and has access 
 
 Input paramters user will be prompted for
 
-	```--marathon_host (string) - FQDN or IP of the Marathon host (without the http://).```
-	```--marathon_app (string) - Name of the Marathon App without the "/" to configure autoscale on.```
-	```--max_mem_percent (int) - Trigger percentage of Avg Mem Utilization across all tasks for the target Marathon App before scaleout is triggered.```
-	```--max_cpu_time (int) - Trigger Avg CPU time across all tasks for the target Marathon App before scaleout is triggered.```
-		```--trigger_mode (string) - 'both' or 'and' determines whether both cpu and mem must be triggered or just one or the other.```
-	```--autoscale_multiplier (float) - The number that current instances will be multiplied against to decide how many instances to add during a scaleout operation.```
-	```--max_instances (int) - The Ceiling for number of instances to stop scaling out EVEN if thresholds are crossed.```
+	--marathon_host (string) - FQDN or IP of the Marathon host (without the http://).
+	--marathon_app (string) - Name of the Marathon App without the "/" to configure autoscale on.
+	--max_mem_percent (int) - Trigger percentage of Avg Mem Utilization across all tasks for the target Marathon App before scaleout is triggered.
+	--max_cpu_time (int) - Trigger Avg CPU time across all tasks for the target Marathon App before scaleout is triggered.
+	--trigger_mode (string) - 'both' or 'and' determines whether both cpu and mem must be triggered or just one or the other.
+	--autoscale_multiplier (float) - The number that current instances will be multiplied against to decide how many instances to add during a scaleout operation.
+	--max_instances (int) - The Ceiling for number of instances to stop scaling out EVEN if thresholds are crossed.
 
 ## Installation
 
