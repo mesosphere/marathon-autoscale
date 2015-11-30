@@ -13,7 +13,7 @@ max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across 
 max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
 autoscale_multiplier = float(input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
-
+max_instances = int(input("Enter the Max instances that should ever exist for this application (ie. 20) : "))
 
 class marathon(object):
 
@@ -54,6 +54,10 @@ class marathon(object):
     def scale_app(self,marathon_app,autoscale_multiplier):
         target_instances_float=self.appinstances * autoscale_multiplier
         target_instances=math.ceil(target_instances_float)
+        if (target_instances > max_instances):
+            target_instances=max_instances
+        else:
+            target_instances=target_instances
         data ={'instances': target_instances}
         json_data=json.dumps(data)
         headers = {'Content-type': 'application/json'}
