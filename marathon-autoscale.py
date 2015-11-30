@@ -121,15 +121,12 @@ if __name__ == "__main__":
                 aws_marathon.scale_app(marathon_app,autoscale_multiplier)
             else:
                 print ("Both values were not greater than autoscale targets")
-                break
         elif (trigger_mode=="or"):
             if (app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent):
                 print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app,autoscale_multiplier)
-                break
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
-                break
 
-    print("Successfully completed a cycle, sleeping for 1 minute ...")
-    time.sleep(60)
+    print("Successfully completed a cycle, sleeping for 30 seconds ...")
+    time.sleep(30)
