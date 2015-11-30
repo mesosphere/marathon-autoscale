@@ -5,7 +5,7 @@ import requests
 import json
 import pprint
 
-marathon_host = 'thomaskra-elasticl-1j8f6oyu2cidt-1044133857.us-east-1.elb.amazonaws.com'
+marathon_host = 'thomaskra-elasticl-1dw3edm5f8i3m-2072358235.us-east-1.elb.amazonaws.com'
 # marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
 marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
 max_mem_percent = input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
@@ -115,8 +115,6 @@ if __name__ == "__main__":
     elif (trigger_mode=="or"):
          if any(app_avg_cpu > max_cpu_time, app_avg_mem > max_mem_percent):
             print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
-
-    else:
 
 
     print("Successfully completed program...")
