@@ -38,8 +38,8 @@
           <file leaf-file-name="marathon-autoscale.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/marathon-autoscale.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state vertical-scroll-proportion="0.81852794">
-                  <caret line="59" column="45" selection-start-line="59" selection-start-column="45" selection-end-line="59" selection-end-column="45" />
+                <state vertical-scroll-proportion="0.78045684">
+                  <caret line="57" column="71" selection-start-line="57" selection-start-column="71" selection-end-line="57" selection-end-column="71" />
                   <folding>
                     <element signature="e#23#33#0" expanded="true" />
                   </folding>
@@ -101,8 +101,8 @@
     <order />
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="25" />
-    <option name="y" value="23" />
+    <option name="x" value="60" />
+    <option name="y" value="67" />
     <option name="width" value="1821" />
     <option name="height" value="1053" />
   </component>
@@ -393,7 +393,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="25" y="23" width="1821" height="1053" extended-state="0" />
+    <frame x="60" y="67" width="1821" height="1053" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -481,8 +481,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/marathon-autoscale.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.81852794">
-          <caret line="59" column="45" selection-start-line="59" selection-start-column="45" selection-end-line="59" selection-end-column="45" />
+        <state vertical-scroll-proportion="0.78045684">
+          <caret line="57" column="71" selection-start-line="57" selection-start-column="71" selection-end-line="57" selection-end-column="71" />
           <folding>
             <element signature="e#23#33#0" expanded="true" />
           </folding>

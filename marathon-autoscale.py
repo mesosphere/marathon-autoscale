@@ -47,7 +47,7 @@ class marathon(object):
             for i in response['app']['tasks']:
                 taskid=i['id']
                 hostid=i['host']
-                print ('DEBUG - taskId=',taskid +'running on '+hostid)
+                print ('DEBUG - taskId=',taskid +' running on '+hostid)
                 app_task_dict[str(taskid)]=str(hostid)
             return app_task_dict
 
@@ -55,6 +55,7 @@ class marathon(object):
         target_instances_float=self.appinstances * autoscale_multiplier
         target_instances=math.ceil(target_instances_float)
         if (target_instances > max_instances):
+            print("Reached the set maximum instances of", max_instances)
             target_instances=max_instances
         else:
             target_instances=target_instances
