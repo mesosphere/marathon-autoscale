@@ -49,7 +49,7 @@ class marathon(object):
             return app_task_dict
 
     def scale_app(self,marathon_app,autoscale_multiplier):
-        data ={"instances:" 4}
+        data ={"instances": 4}
         json_data=json.dumps(data)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         response=requests.put(self.uri + '/marathon/v2/apps/'+ marathon_app,json_data,headers=headers).json()
