@@ -7,9 +7,9 @@ import pprint
 
 marathon_host = 'thomaskra-elasticl-1dw3edm5f8i3m-2072358235.us-east-1.elb.amazonaws.com'
 # marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
-marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
-max_mem_percent = input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
-max_cpu_time = input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
+marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : "))
+max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : ")
+max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
 # autoscale_multiplier = input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : ")
 
