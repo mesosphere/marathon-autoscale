@@ -46,9 +46,8 @@ class marathon(object):
             app_task_dict={}
             for i in response['app']['tasks']:
                 taskid=i['id']
-                print ('DEBUG - taskId=',taskid)
                 hostid=i['host']
-                print ('DEBUG - hostId=', hostid)
+                print ('DEBUG - taskId=',taskid +'running on '+hostid)
                 app_task_dict[str(taskid)]=str(hostid)
             return app_task_dict
 
@@ -66,10 +65,10 @@ def get_task_agentstatistics(task,host):
     # by connecting to the Mesos Agent and then making a REST call against Mesos statistics
     # Return to Statistics for the specific task for the marathon_app
     response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
-    print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',host)
+    #print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',host)
     for i in response:
         executor_id=i['executor_id']
-        print("DEBUG -- Printing each Executor ID ",executor_id)
+        #print("DEBUG -- Printing each Executor ID ",executor_id)
         if (executor_id == task):
             task_stats =i['statistics']
             # print ('****Specific stats for task',executor_id,'=',task_stats)
@@ -81,45 +80,41 @@ if __name__ == "__main__":
 
     # Initialize the Marathon object
     aws_marathon=marathon(marathon_host)
-    # Print the initialized object properties
-    print(aws_marathon.name, " Object and Properties")
     # Call get_all_apps method for new object created from aws_marathon class and return all apps
     marathon_apps = aws_marathon.get_all_apps()
-    print ("Marathon 'aws_marathon.get_all_apps' method call", marathon_apps)
+    print ("The following apps exist in Marathon...", marathon_apps)
     # Quick sanity check to test for apps existence in MArathon.
     if (marathon_app in marathon_apps):
-        print ("Found your Marathon App=",marathon_app)
+        print ("  Found your Marathon App=",marathon_app)
     else:
-        print ("Could not find your App =",marathon_app)
+        print ("  Could not find your App =",marathon_app)
         sys.exit(1)
-    # Return the .apps property of the object created from aws_marathon class
-    print ("Marathon App 'apps' property call", aws_marathon.apps)
     # Return a dictionary comprised of the target app taskId and hostId.
     app_task_dict = aws_marathon.get_app_details(marathon_app)
-    print ("Marathon  App 'tasks' for", marathon_app, "are=", app_task_dict)
+    print ("    Marathon  App 'tasks' for", marathon_app, "are=", app_task_dict)
 
     app_cpu_values=[]
     app_mem_values=[]
     for task,host in app_task_dict.items():
         task_stats=get_task_agentstatistics(task,host)
         cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
-        print ("Combined Task CPU Kernel and User Time", cpus_time)
+        print ("Combined Task CPU Kernel and User Time for task", task,"=",cpus_time)
         mem_rss_bytes = int(task_stats['mem_rss_bytes'])
-        print ('task mem_rss_bytes',mem_rss_bytes)
+        print ("task",task, "mem_rss_bytes=",mem_rss_bytes)
         mem_limit_bytes = int(task_stats['mem_limit_bytes'])
-        print ('task mem_limit_bytes',mem_limit_bytes)
+        print ("task",task,"mem_limit_bytes=",mem_limit_bytes)
         mem_utilization=100*(float(mem_rss_bytes) / float(mem_limit_bytes))
-        print ('task mem Utilization=',mem_utilization)
+        print ("task", task, "mem Utilization=",mem_utilization)
         print()
         app_cpu_values.append(cpus_time)
         app_mem_values.append(mem_utilization)
     # Normalized data for all tasks into a single value by averaging
     app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
-    print ('Average CPU Time for app', marathon_app,'=', app_avg_cpu)
+    print ('Current Average  CPU Time for app', marathon_app,'=', app_avg_cpu)
     app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
-    print ('Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
+    print ('Current Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
     #Evaluate whether an autoscale trigger is called for
-
+    print('\n')
     if (trigger_mode=="and"):
         if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
             print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
@@ -135,6 +130,6 @@ if __name__ == "__main__":
         else:
             print ("Neither Mem 'or' CPU values exceeding threshold")
 
-  
+
     print("Successfully completed program...")
     sys.exit(0)
