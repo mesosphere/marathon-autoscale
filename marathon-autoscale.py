@@ -73,6 +73,10 @@ def get_task_agentstatistics(task,host):
             task_stats =i['statistics']
             # print ('****Specific stats for task',executor_id,'=',task_stats)
             return task_stats
+def timer():
+    print("Successfully completed a cycle, sleeping for 30 seconds ...")
+    time.sleep(30)
+    return
 
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
@@ -119,14 +123,16 @@ if __name__ == "__main__":
             if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
                 print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app,autoscale_multiplier)
+                timer()
             else:
                 print ("Both values were not greater than autoscale targets")
+                timer()
         elif (trigger_mode=="or"):
             if (app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent):
                 print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app,autoscale_multiplier)
+                timer()
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
+                timer()
 
-    print("Successfully completed a cycle, sleeping for 30 seconds ...")
-    time.sleep(30)
