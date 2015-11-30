@@ -12,6 +12,7 @@ max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across 
 max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
 # autoscale_multiplier = input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : ")
+autoscale_multiplier = 4
 
 class marathon(object):
 
@@ -46,6 +47,15 @@ class marathon(object):
                 print ('DEBUG - hostId=', hostid)
                 app_task_dict[str(taskid)]=str(hostid)
             return app_task_dict
+
+    def scale_app(self,marathon_app,autoscale_multiplier):
+        data ={"instances:" 4}
+        json_data=json.dumps(data)
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        response=requests.put(self.uri + '/marathon/v2/apps/'+ marathon_app,json_data,headers=headers).json()
+
+        print ('Scale_app return status code =', response.status_code)
+
 
 def get_task_agentstatistics(task,host):
     # Get the performance Metrics for all the tasks for the Marathon App specified
@@ -101,12 +111,12 @@ if __name__ == "__main__":
         print()
         app_cpu_values.append(cpus_time)
         app_mem_values.append(mem_utilization)
-
+    # Normalized data for all tasks into a single value by averaging
     app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
     print ('Average CPU Time for app', marathon_app,'=', app_avg_cpu)
     app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
     print ('Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
-
+    #Evaluate whether an autoscale trigger is called for
     if (trigger_mode=="and"):
         if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
             print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
