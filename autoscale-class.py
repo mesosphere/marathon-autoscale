@@ -108,13 +108,16 @@ if __name__ == "__main__":
     print ('Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
 
     if (trigger_mode=="and"):
-        if all(app_avg_cpu > max_cpu_time, app_avg_mem > max_mem_percent):
+        if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
             print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
-
+        else:
+            print ("Both values were not greater than autoscale targets")
 
     elif (trigger_mode=="or"):
-         if any(app_avg_cpu > max_cpu_time, app_avg_mem > max_mem_percent):
+        if (app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent):
             print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
+        else:
+            print ("Neither Mem 'or' CPU values exceeding threshold")
     else:
         print ("Incorrect value provided for trigger_mode")
         sys.exit(1)
