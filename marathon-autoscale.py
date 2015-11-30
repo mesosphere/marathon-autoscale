@@ -3,8 +3,8 @@ __author__ = 'tkraus'
 import sys
 import requests
 import json
-import pprint
 import math
+import time
 
 marathon_host = 'thomaskra-elasticl-1dw3edm5f8i3m-2072358235.us-east-1.elb.amazonaws.com'
 # marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
@@ -74,62 +74,62 @@ def get_task_agentstatistics(task,host):
             # print ('****Specific stats for task',executor_id,'=',task_stats)
             return task_stats
 
-
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
-
-    # Initialize the Marathon object
-    aws_marathon=marathon(marathon_host)
-    # Call get_all_apps method for new object created from aws_marathon class and return all apps
-    marathon_apps = aws_marathon.get_all_apps()
-    print ("The following apps exist in Marathon...", marathon_apps)
-    # Quick sanity check to test for apps existence in MArathon.
-    if (marathon_app in marathon_apps):
-        print ("  Found your Marathon App=",marathon_app)
-    else:
-        print ("  Could not find your App =",marathon_app)
-        sys.exit(1)
-    # Return a dictionary comprised of the target app taskId and hostId.
-    app_task_dict = aws_marathon.get_app_details(marathon_app)
-    print ("    Marathon  App 'tasks' for", marathon_app, "are=", app_task_dict)
-
-    app_cpu_values=[]
-    app_mem_values=[]
-    for task,host in app_task_dict.items():
-        task_stats=get_task_agentstatistics(task,host)
-        cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
-        print ("Combined Task CPU Kernel and User Time for task", task,"=",cpus_time)
-        mem_rss_bytes = int(task_stats['mem_rss_bytes'])
-        print ("task",task, "mem_rss_bytes=",mem_rss_bytes)
-        mem_limit_bytes = int(task_stats['mem_limit_bytes'])
-        print ("task",task,"mem_limit_bytes=",mem_limit_bytes)
-        mem_utilization=100*(float(mem_rss_bytes) / float(mem_limit_bytes))
-        print ("task", task, "mem Utilization=",mem_utilization)
-        print()
-        app_cpu_values.append(cpus_time)
-        app_mem_values.append(mem_utilization)
-    # Normalized data for all tasks into a single value by averaging
-    app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
-    print ('Current Average  CPU Time for app', marathon_app,'=', app_avg_cpu)
-    app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
-    print ('Current Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
-    #Evaluate whether an autoscale trigger is called for
-    print('\n')
-    if (trigger_mode=="and"):
-        if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
-            print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
-            aws_marathon.scale_app(marathon_app,autoscale_multiplier)
+    running=1
+    while running == 1:
+        # Initialize the Marathon object
+        aws_marathon=marathon(marathon_host)
+        # Call get_all_apps method for new object created from aws_marathon class and return all apps
+        marathon_apps = aws_marathon.get_all_apps()
+        print ("The following apps exist in Marathon...", marathon_apps)
+        # Quick sanity check to test for apps existence in MArathon.
+        if (marathon_app in marathon_apps):
+            print ("  Found your Marathon App=",marathon_app)
         else:
-            print ("Both values were not greater than autoscale targets")
+            print ("  Could not find your App =",marathon_app)
+            sys.exit(1)
+        # Return a dictionary comprised of the target app taskId and hostId.
+        app_task_dict = aws_marathon.get_app_details(marathon_app)
+        print ("    Marathon  App 'tasks' for", marathon_app, "are=", app_task_dict)
 
-    elif (trigger_mode=="or"):
-        if (app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent):
-            print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
-            aws_marathon.scale_app(marathon_app,autoscale_multiplier)
+        app_cpu_values=[]
+        app_mem_values=[]
+        for task,host in app_task_dict.items():
+            task_stats=get_task_agentstatistics(task,host)
+            cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
+            print ("Combined Task CPU Kernel and User Time for task", task,"=",cpus_time)
+            mem_rss_bytes = int(task_stats['mem_rss_bytes'])
+            print ("task",task, "mem_rss_bytes=",mem_rss_bytes)
+            mem_limit_bytes = int(task_stats['mem_limit_bytes'])
+            print ("task",task,"mem_limit_bytes=",mem_limit_bytes)
+            mem_utilization=100*(float(mem_rss_bytes) / float(mem_limit_bytes))
+            print ("task", task, "mem Utilization=",mem_utilization)
+            print()
+            app_cpu_values.append(cpus_time)
+            app_mem_values.append(mem_utilization)
+        # Normalized data for all tasks into a single value by averaging
+        app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
+        print ('Current Average  CPU Time for app', marathon_app,'=', app_avg_cpu)
+        app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
+        print ('Current Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
+        #Evaluate whether an autoscale trigger is called for
+        print('\n')
+        if (trigger_mode=="and"):
+            if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
+                print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
+                aws_marathon.scale_app(marathon_app,autoscale_multiplier)
+            else:
+                print ("Both values were not greater than autoscale targets")
 
-        else:
-            print ("Neither Mem 'or' CPU values exceeding threshold")
+        elif (trigger_mode=="or"):
+            if (app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent):
+                print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
+                aws_marathon.scale_app(marathon_app,autoscale_multiplier)
+
+            else:
+                print ("Neither Mem 'or' CPU values exceeding threshold")
 
 
-    print("Successfully completed program...")
-    sys.exit(0)
+    print("Successfully completed a cycle, sleeping for 1 minute ...")
+    time.sleep(60)
