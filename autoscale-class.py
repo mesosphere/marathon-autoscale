@@ -22,8 +22,8 @@ class marathon(object):
     def get_all_apps(self):
         response=requests.get(self.uri + '/marathon/v2/apps').json()
         if response['apps'] ==[]:
-            for i in response['apps']:
-                print ("No Apps found on Marathon")
+            print ("No Apps found on Marathon")
+            sys.exit(1)
         else:
             apps=[]
             for i in response['apps']:
