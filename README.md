@@ -27,56 +27,59 @@ core@ip-10-0-6-238 ~/ $ cd marathon-autoscale
 
 ## Example
 
-root@ip-10-2-6-238 ~/marathon-autoscale $ python marathon-autoscale.py 
-Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : basic-0
-Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : 5
-Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : 5
-Enter which metric(s) to trigger Autoscale ('and', 'or') : or
-Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : 2
-Enter the Max instances that should ever exist for this application (ie. 20) : 10
-This application tested with Python3 only
+	root@ip-10-2-6-238 ~/marathon-autoscale $ python marathon-autoscale.py 
+	Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : basic-0
+	Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : 5
+	Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : 5
+	Enter which metric(s) to trigger Autoscale ('and', 'or') : or
+	Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : 2
+	Enter the Max instances that should ever exist for this application (ie. 20) : 10
+	This application tested with Python3 only
 
-The following apps exist in Marathon... ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
-Found your Marathon App= basic-0
-basic-0 has 4 deployed instances
+	The following apps exist in Marathon... ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
+	Found your Marathon App= basic-0
+	basic-0 has 4 deployed instances
 
     Marathon  App 'tasks' for basic-0 are= {'basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5': '10.0.1.175'}
-Combined Task CPU Kernel and User Time for task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 = 2.11
-task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2613248
-task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.933779761904762
+	
+	Combined Task CPU Kernel and User Time for task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 = 2.11
+	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2613248
+	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
+	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.933779761904762
 
-Combined Task CPU Kernel and User Time for task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 = 0.94
-task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2576384
-task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem Utilization= 5.850074404761905
+	Combined Task CPU Kernel and User Time for task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 = 0.94
+	task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2576384
+	task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
+	task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem Utilization= 5.850074404761905
 
-Combined Task CPU Kernel and User Time for task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 = 1.87
-task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2609152
-task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem Utilization= 5.924479166666666
+	Combined Task CPU Kernel and User Time for task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 = 1.87
+	task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2609152
+	task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
+	task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem Utilization= 5.924479166666666
 
-Combined Task CPU Kernel and User Time for task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 = 1.02
-task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2555904
-task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem Utilization= 5.803571428571429
+	Combined Task CPU Kernel and User Time for task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 = 1.02
+	task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2555904
+	task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
+	task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem Utilization= 5.803571428571429
 
-Current Average  CPU Time for app basic-0 = 1.4849999999999999
-Current Average Mem Utilization for app basic-0 = 5.877976190476192
+	Current Average  CPU Time for app basic-0 = 1.4849999999999999
+	Current Average Mem Utilization for app basic-0 = 5.877976190476192
 
 
-Autoscale triggered based Mem 'or' CPU exceeding threshold
-Scale_app return status code = 200
-Successfully completed a cycle, sleeping for 30 seconds ...
-Found the following App LIST on Marathon = ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
-The following apps exist in Marathon... ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
-  Found your Marathon App= basic-0
-basic-0 has 8 deployed instances
+	Autoscale triggered based Mem 'or' CPU exceeding threshold
+	Scale_app return status code = 200
+	Successfully completed a cycle, sleeping for 30 seconds ...
+	
+	Found the following App LIST on Marathon = ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
+	The following apps exist in Marathon... ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
+	  Found your Marathon App= basic-0
+	basic-0 has 8 deployed instances
 
     Marathon  App 'tasks' for basic-0 are= {'basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.371d5233-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.371d0412-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.371d7945-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.371d5234-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.175'}
-Combined Task CPU Kernel and User Time for task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 = 2.11
-task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2625536
-task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.961681547619048
+
+	Combined Task CPU Kernel and User Time for task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 = 2.11
+	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2625536
+	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
+	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.961681547619048
 
 
