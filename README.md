@@ -1,29 +1,30 @@
 # marathon-autoscale
 Simple Proof of Concept application for Scaling Application running on Marathon and Mesos based on Application's Utilization of CPU and Memory. Note: This trigger metrics can be changed to be network related in order to have a more accurate representation of utilization that requires scaling.
 
-# Objective
+## Objective
 To provide a simple AutoScale Automation example running on top of DCOS and Marathon.
 
-# Program Execution
+## Program Execution
 The python program runs on any system that has Python3 installed and has access to the Marathon server and the Mesos Agent nodes over HTTP. The program will use standard python modules for REST API consumption such as requests and json.
 
-$ python marathon-autoscale.py
+#### $ python marathon-autoscale.py
+
 
 Input paramters user will be prompted for
---marathon_host (string) - FQDN or IP of the Marathon host (without the http://)
---marathon_app (string) - Name of the Marathon App without the "/" to configure autoscale on.
---max_mem_percent (int) - Trigger percentage of Avg Mem Utilization across all tasks for the target Marathon App before scaleout is triggered
---max_cpu_time (int) - Trigger Avg CPU time across all tasks for the target Marathon App before scaleout is triggered.
---trigger_mode (string) - 'both' or 'and' determines whether both cpu and mem must be triggered or just one or the other.
---autoscale_multiplier (float) - The number that current instances will be multiplied against to decide how many instances to add during a scaleout operation
---max_instances (int) - The Ceiling for number of instances to stop scaling out EVEN if thresholds are crossed.
+```--marathon_host (string) - FQDN or IP of the Marathon host (without the http://).```
+```--marathon_app (string) - Name of the Marathon App without the "/" to configure autoscale on.```
+```--max_mem_percent (int) - Trigger percentage of Avg Mem Utilization across all tasks for the target Marathon App before scaleout is triggered.```
+```--max_cpu_time (int) - Trigger Avg CPU time across all tasks for the target Marathon App before scaleout is triggered.```
+```--trigger_mode (string) - 'both' or 'and' determines whether both cpu and mem must be triggered or just one or the other.```
+```--autoscale_multiplier (float) - The number that current instances will be multiplied against to decide how many instances to add during a scaleout operation.```
+```--max_instances (int) - The Ceiling for number of instances to stop scaling out EVEN if thresholds are crossed.```
 
-# Installation
+## Installation
 
 core@ip-10-0-6-238 ~/ $ git clone https://github.com/mesosphere/marathon-autoscale.git
 core@ip-10-0-6-238 ~/ $ cd marathon-autoscale
 
-# Example
+## Example
 
 root@ip-10-2-6-238 ~/marathon-autoscale $ python marathon-autoscale.py 
 Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : basic-0
