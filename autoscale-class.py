@@ -115,6 +115,9 @@ if __name__ == "__main__":
     elif (trigger_mode=="or"):
          if any(app_avg_cpu > max_cpu_time, app_avg_mem > max_mem_percent):
             print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
+    else:
+        print ("Incorrect value provided for trigger_mode")
+        sys.exit(1)
 
 
     print("Successfully completed program...")
