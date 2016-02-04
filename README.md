@@ -1,8 +1,14 @@
 # marathon-autoscale
-Simple Proof of Concept application for Scaling Application running on Marathon and Mesos based on Application's Utilization of CPU and Memory. Note: This trigger metrics can be changed to be network related in order to have a more accurate representation of utilization that requires scaling.
+Simple Proof of Concept application for Scaling Application running on Marathon and Mesos based on Application's based on the utilization metrics Mesos reports. Note: This trigger metrics can be changed to be network related in order to have a more accurate representation of utilization that requires scaling. The application runs on any system that has Python 3 installed and has access to the Marathon server via HTTP TCP Port 80 and the Mesos Agent nodes over TCP port 5051. marathon-autoscale.py is intended to demonstrate what is possible when you run your applications on Marathon and Mesos. It periodically monitors the aggregate CPU and memory utilization for all the individual tasks running on the Mesos Agents that make up the specified Marathon application. When the threshold you set for these metrics is reached, marathon-autoscale.py will add instances to the application based on the multiplier you specify.
 
 ## Objective
 To provide a simple AutoScale Automation example running on top of DCOS and Marathon.
+
+## Prerequisites
+A running DCOS cluster.
+Python 3 installed on the system you will run marathon-autoscale.py. Note: This can be one of the Mesos master nodes.
+An application running on the native Marathon instance that you intend to autoscale.
+TCP Port 80 open to the Marathon instance and TCP Port 5051 open to the Mesos Agent hosts.
 
 ## Program Execution
 The python program runs on any system that has Python3 installed and has access to the Marathon server and the Mesos Agent nodes over HTTP. The program will use standard python modules for REST API consumption such as requests and json.
