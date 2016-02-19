@@ -87,5 +87,7 @@ core@ip-10-0-6-238 ~/ $ cd marathon-autoscale
 	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2625536
 	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
 	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.961681547619048
+	
+	TESTING TK
 
 
