@@ -6,8 +6,7 @@ import json
 import pprint
 import math
 
-marathon_host = 'thomaskra-elasticl-1dw3edm5f8i3m-2072358235.us-east-1.elb.amazonaws.com'
-# marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
+marathon_host = input("Enter the resolvable hostname or IP of your Marathon Instance : ")
 marathon_app = raw_input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
 autoscale_multiplier = float(raw_input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
 
