@@ -18,10 +18,10 @@ class marathon(object):
 
     def __init__(self,marathon_host):
         self.name=marathon_host
-        self.uri=("http://"+marathon_host)
+        self.uri=("http://"+marathon_host+":8080")
 
     def get_all_apps(self):
-        response=requests.get(self.uri + '/marathon/v2/apps').json()
+        response=requests.get(self.uri + '/v2/apps').json()
         if response['apps'] ==[]:
             print ("No Apps found on Marathon")
             sys.exit(1)
@@ -35,7 +35,7 @@ class marathon(object):
             return apps
 
     def get_app_details(self,marathon_app):
-        response=requests.get(self.uri + '/marathon/v2/apps/'+ marathon_app).json()
+        response=requests.get(self.uri + '/v2/apps/'+ marathon_app).json()
         if (response['app']['tasks'] ==[]):
             print ('No task data on Marathon for App !', marathon_app)
         else:
@@ -61,7 +61,7 @@ class marathon(object):
         data ={'instances': target_instances}
         json_data=json.dumps(data)
         headers = {'Content-type': 'application/json'}
-        response=requests.put(self.uri + '/marathon/v2/apps/'+ marathon_app,json_data,headers=headers)
+        response=requests.put(self.uri + '/v2/apps/'+ marathon_app,json_data,headers=headers)
         print ('Scale_app return status code =', response.status_code)
 
 def get_task_agentstatistics(task,host):
