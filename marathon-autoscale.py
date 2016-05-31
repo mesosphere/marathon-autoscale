@@ -135,5 +135,4 @@ if __name__ == "__main__":
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
-            timer()
-
+        timer()
