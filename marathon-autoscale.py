@@ -14,40 +14,40 @@ trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') :
 autoscale_multiplier = float(input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
 max_instances = int(input("Enter the Max instances that should ever exist for this application (ie. 20) : "))
 
-class marathon(object):
+class Marathon(object):
 
-    def __init__(self,marathon_host):
-        self.name=marathon_host
+    def __init__(self, marathon_host):
+        self.name = marathon_host
         self.uri=("http://"+marathon_host+":8080")
 
     def get_all_apps(self):
-        response=requests.get(self.uri + '/v2/apps').json()
+        response = requests.get(self.uri + '/v2/apps').json()
         if response['apps'] ==[]:
             print ("No Apps found on Marathon")
             sys.exit(1)
         else:
             apps=[]
             for i in response['apps']:
-                appid=i['id'].strip('/')
+                appid = i['id'].strip('/')
                 apps.append(appid)
-            print ("Found the following App LIST on Marathon =",apps)
-            self.apps=apps
+            print ("Found the following App LIST on Marathon =", apps)
+            self.apps = apps # TODO: declare self.apps = [] on top and delete this line, leave the apps.append(appid)
             return apps
 
-    def get_app_details(self,marathon_app):
-        response=requests.get(self.uri + '/v2/apps/'+ marathon_app).json()
+    def get_app_details(self, marathon_app):
+        response = requests.get(self.uri + '/v2/apps/'+ marathon_app).json()
         if (response['app']['tasks'] ==[]):
             print ('No task data on Marathon for App !', marathon_app)
         else:
-            app_instances=response['app']['instances']
-            self.appinstances=app_instances
-            print(marathon_app,"has",self.appinstances,"deployed instances")
+            app_instances = response['app']['instances']
+            self.appinstances = app_instances
+            print(marathon_app, "has", self.appinstances, "deployed instances")
             app_task_dict={}
             for i in response['app']['tasks']:
-                taskid=i['id']
-                hostid=i['host']
-                print ('DEBUG - taskId=',taskid +' running on '+hostid)
-                app_task_dict[str(taskid)]=str(hostid)
+                taskid = i['id']
+                hostid = i['host']
+                print ('DEBUG - taskId=', taskid +' running on '+hostid)
+                app_task_dict[str(taskid)] = str(hostid)
             return app_task_dict
 
     def scale_app(self,marathon_app,autoscale_multiplier):
@@ -64,17 +64,17 @@ class marathon(object):
         response=requests.put(self.uri + '/v2/apps/'+ marathon_app,json_data,headers=headers)
         print ('Scale_app return status code =', response.status_code)
 
-def get_task_agentstatistics(task,host):
+def get_task_agentstatistics(task, host):
     # Get the performance Metrics for all the tasks for the Marathon App specified
     # by connecting to the Mesos Agent and then making a REST call against Mesos statistics
     # Return to Statistics for the specific task for the marathon_app
-    response=requests.get('http://'+host + ':5051/monitor/statistics.json').json()
+    response = requests.get('http://'+host + ':5051/monitor/statistics.json').json()
     #print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',host)
     for i in response:
-        executor_id=i['executor_id']
-        #print("DEBUG -- Printing each Executor ID ",executor_id)
+        executor_id = i['executor_id']
+        #print("DEBUG -- Printing each Executor ID ", executor_id)
         if (executor_id == task):
-            task_stats =i['statistics']
+            task_stats = i['statistics']
             # print ('****Specific stats for task',executor_id,'=',task_stats)
             return task_stats
 def timer():
@@ -87,56 +87,52 @@ if __name__ == "__main__":
     running=1
     while running == 1:
         # Initialize the Marathon object
-        aws_marathon=marathon(marathon_host)
+        aws_marathon = Marathon(marathon_host)
         # Call get_all_apps method for new object created from aws_marathon class and return all apps
         marathon_apps = aws_marathon.get_all_apps()
         print ("The following apps exist in Marathon...", marathon_apps)
         # Quick sanity check to test for apps existence in MArathon.
         if (marathon_app in marathon_apps):
-            print ("  Found your Marathon App=",marathon_app)
+            print ("  Found your Marathon App=", marathon_app)
         else:
-            print ("  Could not find your App =",marathon_app)
+            print ("  Could not find your App =", marathon_app)
             sys.exit(1)
         # Return a dictionary comprised of the target app taskId and hostId.
         app_task_dict = aws_marathon.get_app_details(marathon_app)
         print ("    Marathon  App 'tasks' for", marathon_app, "are=", app_task_dict)
 
-        app_cpu_values=[]
-        app_mem_values=[]
+        app_cpu_values = []
+        app_mem_values = []
         for task,host in app_task_dict.items():
-            task_stats=get_task_agentstatistics(task,host)
+            task_stats = get_task_agentstatistics(task, host)
             cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
-            print ("Combined Task CPU Kernel and User Time for task", task,"=",cpus_time)
+            print ("Combined Task CPU Kernel and User Time for task", task, "=", cpus_time)
             mem_rss_bytes = int(task_stats['mem_rss_bytes'])
-            print ("task",task, "mem_rss_bytes=",mem_rss_bytes)
+            print ("task", task, "mem_rss_bytes=", mem_rss_bytes)
             mem_limit_bytes = int(task_stats['mem_limit_bytes'])
-            print ("task",task,"mem_limit_bytes=",mem_limit_bytes)
-            mem_utilization=100*(float(mem_rss_bytes) / float(mem_limit_bytes))
-            print ("task", task, "mem Utilization=",mem_utilization)
+            print ("task", task, "mem_limit_bytes=", mem_limit_bytes)
+            mem_utilization = 100 * (float(mem_rss_bytes) / float(mem_limit_bytes))
+            print ("task", task, "mem Utilization=", mem_utilization)
             print()
             app_cpu_values.append(cpus_time)
             app_mem_values.append(mem_utilization)
         # Normalized data for all tasks into a single value by averaging
         app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
-        print ('Current Average  CPU Time for app', marathon_app,'=', app_avg_cpu)
+        print ('Current Average  CPU Time for app', marathon_app, '=', app_avg_cpu)
         app_avg_mem=(sum(app_mem_values) / len(app_mem_values))
         print ('Current Average Mem Utilization for app', marathon_app,'=', app_avg_mem)
         #Evaluate whether an autoscale trigger is called for
         print('\n')
-        if (trigger_mode=="and"):
+        if (trigger_mode == "and"):
             if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent):
                 print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
-                aws_marathon.scale_app(marathon_app,autoscale_multiplier)
-                timer()
+                aws_marathon.scale_app(marathon_app, autoscale_multiplier)
             else:
                 print ("Both values were not greater than autoscale targets")
-                timer()
-        elif (trigger_mode=="or"):
+        elif (trigger_mode == "or"):
             if (app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent):
                 print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
-                aws_marathon.scale_app(marathon_app,autoscale_multiplier)
-                timer()
+                aws_marathon.scale_app(marathon_app, autoscale_multiplier)
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
-                timer()
-
+        timer()
