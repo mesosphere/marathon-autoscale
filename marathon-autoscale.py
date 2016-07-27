@@ -104,9 +104,31 @@ if __name__ == "__main__":
         app_cpu_values = []
         app_mem_values = []
         for task,host in app_task_dict.items():
+            #cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
+            #print ("Combined Task CPU Kernel and User Time for task", task, "=", cpus_time)
+
+            # Compute CPU usage
             task_stats = get_task_agentstatistics(task, host)
-            cpus_time =(task_stats['cpus_system_time_secs']+task_stats['cpus_user_time_secs'])
-            print ("Combined Task CPU Kernel and User Time for task", task, "=", cpus_time)
+            cpus_system_time_secs0 = float(task_stats['cpus_system_time_secs'])
+            cpus_user_time_secs0 = float(task_stats['cpus_user_time_secs'])
+            timestamp0 = float(task_stats['timestamp'])
+
+            time.sleep(1)
+
+            task_stats = get_task_agentstatistics(task, host)
+            cpus_system_time_secs1 = float(task_stats['cpus_system_time_secs'])
+            cpus_user_time_secs1 = float(task_stats['cpus_user_time_secs'])
+            timestamp1 = float(task_stats['timestamp'])
+
+            cpus_time_total0 = cpus_system_time_secs0 + cpus_user_time_secs0
+            cpus_time_total1 = cpus_system_time_secs1 + cpus_user_time_secs1
+            cpus_time_delta = cpus_time_total1 - cpus_time_total0
+            timestamp_delta = timestamp1 - timestamp0
+
+            # CPU percentage usage
+            usage = float(cpus_time_delta / timestamp_delta) * 100
+
+            # RAM usage
             mem_rss_bytes = int(task_stats['mem_rss_bytes'])
             print ("task", task, "mem_rss_bytes=", mem_rss_bytes)
             mem_limit_bytes = int(task_stats['mem_limit_bytes'])
@@ -114,7 +136,9 @@ if __name__ == "__main__":
             mem_utilization = 100 * (float(mem_rss_bytes) / float(mem_limit_bytes))
             print ("task", task, "mem Utilization=", mem_utilization)
             print()
-            app_cpu_values.append(cpus_time)
+
+            #app_cpu_values.append(cpus_time)
+            app_cpu_values.append(usage)
             app_mem_values.append(mem_utilization)
         # Normalized data for all tasks into a single value by averaging
         app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
