@@ -6,27 +6,30 @@ import json
 import math
 import time
 
-marathon_host = input("Enter the DNS hostname or IP of your Marathon Instance : ")
+dcos_master = input("Enter the DNS hostname or IP of your Marathon Instance : ")
 #dcos_auth_token=input("Copy Paste DCOS AUTH Token here for Permissive or Strict Mode Clusters : ")
-dcos_auth_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0Nzc0MDM3OTMsInVpZCI6ImJvb3RzdHJhcHVzZXIifQ.Zz_HM38uf0uJCdgt2UdgQDmarpz3GUMlX6ak39KNttePsibpZhBDgTSUqVUNshEnBU-u8llQ5Ye0ZRP95Ab0TduF5dASQnDqzqxcFG7YZcRlLIFv3R1hhaPF4Wk_bTbI8smMApHdo1Qc84-Qg6_9yi3xYnNBYzhMeKzrZoxSwRKOyzwUCJWWL1T6_8zPaJ4sboxmGro8GUvWi52AWNDI76jPxLly0SR_yiAbmxBGml2pLtCGnTere3SBEZ2vDlerGH3mxpgTea57aFbuse_WYLDeDvjI_eym-iUGDllnMzbWZKUnCAbCaK5-0t40AxudTpkDqxzWr9A1X5kHHI8Q6g"
+#dcos_auth_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0Nzc0MDM3OTMsInVpZCI6ImJvb3RzdHJhcHVzZXIifQ.Zz_HM38uf0uJCdgt2UdgQDmarpz3GUMlX6ak39KNttePsibpZhBDgTSUqVUNshEnBU-u8llQ5Ye0ZRP95Ab0TduF5dASQnDqzqxcFG7YZcRlLIFv3R1hhaPF4Wk_bTbI8smMApHdo1Qc84-Qg6_9yi3xYnNBYzhMeKzrZoxSwRKOyzwUCJWWL1T6_8zPaJ4sboxmGro8GUvWi52AWNDI76jPxLly0SR_yiAbmxBGml2pLtCGnTere3SBEZ2vDlerGH3mxpgTea57aFbuse_WYLDeDvjI_eym-iUGDllnMzbWZKUnCAbCaK5-0t40AxudTpkDqxzWr9A1X5kHHI8Q6g"
 marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
 #max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 #max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 #trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
 #autoscale_multiplier = float(input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
 #max_instances = int(input("Enter the Max instances that should ever exist for this application (ie. 20) : "))
+userid = 'bootstrapuser'
+password = 'deleteme'
 max_mem_percent = 40
 max_cpu_time = 40
 trigger_mode = 'or'
 max_instances = 10
 autoscale_multiplier=1.5
 
-class Marathon(object):
 
-    def __init__(self, marathon_host):
-        self.name = marathon_host
-        self.uri=(marathon_host)
+class Marathon(object):
+    def __init__(self, dcos_master,dcos_auth_token):
+        self.name = dcos_master
+        self.uri=(dcos_master)
         self.headers={'Authorization': 'token='+dcos_auth_token, 'Content-type': 'application/json'}
+        self.apps = self.get_all_apps()
 
     def get_all_apps(self):
         response = requests.get(self.uri + '/service/marathon/v2/apps', headers=self.headers, verify=False).json()
@@ -39,12 +42,10 @@ class Marathon(object):
                 appid = i['id'].strip('/')
                 apps.append(appid)
             print ("Found the following App LIST on Marathon =", apps)
-            self.apps = apps # TODO: declare self.apps = [] on top and delete this line, leave the apps.append(appid)
             return apps
 
     def get_app_details(self, marathon_app):
         response = requests.get(self.uri + '/service/marathon/v2/apps/'+ marathon_app, headers=self.headers, verify=False).json()
-        print('Marathon Application = ' + str(response))
         if (response['app']['tasks'] ==[]):
             print ('No task data on Marathon for App !', marathon_app)
         else:
@@ -71,15 +72,30 @@ class Marathon(object):
         data ={'instances': target_instances}
         json_data=json.dumps(data)
         #headers = {'Content-type': 'application/json'}
-        response=requests.put(self.uri + '/service/marathon/v2/apps'+ marathon_app,json_data,headers=self.headers,verify=False)
+        response=requests.put(self.uri + '/service/marathon/v2/apps/'+ marathon_app, json_data,headers=self.headers,verify=False)
         print ('Scale_app return status code =', response.status_code)
+
+def dcos_auth_login(dcos_master,userid,password):
+    '''
+    Will login to the DCOS ACS Service and RETURN A JWT TOKEN for subsequent API requests to Marathon, Mesos, etc
+    :param dcos_master:
+    :param userid:
+    :param password:
+    :return:
+    '''
+    rawdata = {'uid' : userid, 'password' : password}
+    login_headers={'Content-type': 'application/json'}
+    response = requests.post(dcos_master + '/acs/api/v1/auth/login', headers=login_headers, data=json.dumps(rawdata),verify=False).json()
+    auth_token=response['token']
+    return auth_token
+
 
 def get_task_agentstatistics(task, agent):
     # Get the performance Metrics for all the tasks for the Marathon App specified
     # by connecting to the Mesos Agent and then making a REST call against Mesos statistics
     # Return to Statistics for the specific task for the marathon_app
     dcos_headers={'Authorization': 'token='+dcos_auth_token, 'Content-type': 'application/json'}
-    response = requests.get(marathon_host + '/slave/' + agent + '/monitor/statistics.json', verify=False, headers=dcos_headers, allow_redirects=True).json()
+    response = requests.get(dcos_master + '/slave/' + agent + '/monitor/statistics.json', verify=False, headers=dcos_headers, allow_redirects=True).json()
     # print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',agent)
     for i in response:
         executor_id = i['executor_id']
@@ -95,10 +111,13 @@ def timer():
 
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
+    dcos_auth_token=dcos_auth_login(dcos_master,userid,password)
+    print('Auth Token is = ' + dcos_auth_token)
+
     running=1
     while running == 1:
         # Initialize the Marathon object
-        aws_marathon = Marathon(marathon_host)
+        aws_marathon = Marathon(dcos_master,dcos_auth_token)
         print ("Marathon URI = ...", aws_marathon.uri)
         print ("Marathon Headers = ...", aws_marathon.headers)
         print ("Marathon name = ...", aws_marathon.name)
