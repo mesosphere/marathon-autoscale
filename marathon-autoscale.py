@@ -7,21 +7,20 @@ import math
 import time
 
 dcos_master = input("Enter the DNS hostname or IP of your Marathon Instance : ")
-#dcos_auth_token=input("Copy Paste DCOS AUTH Token here for Permissive or Strict Mode Clusters : ")
-#dcos_auth_token="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0Nzc0MDM3OTMsInVpZCI6ImJvb3RzdHJhcHVzZXIifQ.Zz_HM38uf0uJCdgt2UdgQDmarpz3GUMlX6ak39KNttePsibpZhBDgTSUqVUNshEnBU-u8llQ5Ye0ZRP95Ab0TduF5dASQnDqzqxcFG7YZcRlLIFv3R1hhaPF4Wk_bTbI8smMApHdo1Qc84-Qg6_9yi3xYnNBYzhMeKzrZoxSwRKOyzwUCJWWL1T6_8zPaJ4sboxmGro8GUvWi52AWNDI76jPxLly0SR_yiAbmxBGml2pLtCGnTere3SBEZ2vDlerGH3mxpgTea57aFbuse_WYLDeDvjI_eym-iUGDllnMzbWZKUnCAbCaK5-0t40AxudTpkDqxzWr9A1X5kHHI8Q6g"
-marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
 #max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 #max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
 #trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
 #autoscale_multiplier = float(input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
 #max_instances = int(input("Enter the Max instances that should ever exist for this application (ie. 20) : "))
-userid = 'bootstrapuser'
-password = 'deleteme'
+userid = input('Enter the username for the DCOS cluster : ')
+password = input('Enter the password for the DCOS cluster : ')
+marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
+
 max_mem_percent = 40
 max_cpu_time = 40
 trigger_mode = 'or'
 max_instances = 10
-autoscale_multiplier=1.5
+autoscale_multiplier=4
 
 
 class Marathon(object):
@@ -78,17 +77,12 @@ class Marathon(object):
 def dcos_auth_login(dcos_master,userid,password):
     '''
     Will login to the DCOS ACS Service and RETURN A JWT TOKEN for subsequent API requests to Marathon, Mesos, etc
-    :param dcos_master:
-    :param userid:
-    :param password:
-    :return:
     '''
     rawdata = {'uid' : userid, 'password' : password}
     login_headers={'Content-type': 'application/json'}
     response = requests.post(dcos_master + '/acs/api/v1/auth/login', headers=login_headers, data=json.dumps(rawdata),verify=False).json()
     auth_token=response['token']
     return auth_token
-
 
 def get_task_agentstatistics(task, agent):
     # Get the performance Metrics for all the tasks for the Marathon App specified
