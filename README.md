@@ -18,7 +18,7 @@ The python program runs on any system that has Python3 installed and has access 
 
 Input paramters user will be prompted for
 
-	--marathon_host (string) - FQDN or IP of the Marathon host (without the http://).
+	--marathon_host (string) - FQDN or IP of the DCOS Master host (without the http://).
 	--marathon_app (string) - Name of the Marathon App without the "/" to configure autoscale on.
 	--max_mem_percent (int) - Trigger percentage of Avg Mem Utilization across all tasks for the target Marathon App before scaleout is triggered.
 	--max_cpu_time (int) - Trigger Avg CPU time across all tasks for the target Marathon App before scaleout is triggered.

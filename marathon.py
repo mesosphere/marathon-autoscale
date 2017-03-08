@@ -6,21 +6,11 @@ import json
 import math
 import time
 
-dcos_master = input("Enter the DNS hostname or IP of your DCOS Master Instance(http://<dcos-master-ip>) : ")
-#max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
-#max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
-#trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
-#autoscale_multiplier = float(input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
-#max_instances = int(input("Enter the Max instances that should ever exist for this application (ie. 20) : "))
+dcos_master = input("Enter the DNS hostname or IP of your Marathon Instance : ")
 userid = input('Enter the username for the DCOS cluster : ')
 password = input('Enter the password for the DCOS cluster : ')
 marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
 
-max_mem_percent = 40
-max_cpu_time = 40
-trigger_mode = 'or'
-max_instances = 10
-autoscale_multiplier=4
 
 
 class Marathon(object):
@@ -83,25 +73,6 @@ def dcos_auth_login(dcos_master,userid,password):
     response = requests.post(dcos_master + '/acs/api/v1/auth/login', headers=login_headers, data=json.dumps(rawdata),verify=False).json()
     auth_token=response['token']
     return auth_token
-
-def get_task_agentstatistics(task, agent):
-    # Get the performance Metrics for all the tasks for the Marathon App specified
-    # by connecting to the Mesos Agent and then making a REST call against Mesos statistics
-    # Return to Statistics for the specific task for the marathon_app
-    dcos_headers={'Authorization': 'token='+dcos_auth_token, 'Content-type': 'application/json'}
-    response = requests.get(dcos_master + '/slave/' + agent + '/monitor/statistics.json', verify=False, headers=dcos_headers, allow_redirects=True).json()
-    # print ('DEBUG -- Getting Mesos Metrics for Mesos Agent =',agent)
-    for i in response:
-        executor_id = i['executor_id']
-        #print("DEBUG -- Printing each Executor ID ", executor_id)
-        if (executor_id == task):
-            task_stats = i['statistics']
-            print ('****Specific stats for task',executor_id,'=',task_stats)
-            return task_stats
-def timer():
-    print("Successfully completed a cycle, sleeping for 30 seconds ...")
-    time.sleep(30)
-    return
 
 if __name__ == "__main__":
     print ("This application tested with Python3 only")
