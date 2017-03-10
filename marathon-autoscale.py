@@ -137,16 +137,26 @@ if __name__ == "__main__":
             print ('Agent = ' + agent)
             # Compute CPU usage
             task_stats = get_task_agentstatistics(task, agent)
-            cpus_system_time_secs0 = float(task_stats['cpus_system_time_secs'])
-            cpus_user_time_secs0 = float(task_stats['cpus_user_time_secs'])
-            timestamp0 = float(task_stats['timestamp'])
+            if task_stats != None:
+                cpus_system_time_secs0 = float(task_stats['cpus_system_time_secs'])
+                cpus_user_time_secs0 = float(task_stats['cpus_user_time_secs'])
+                timestamp0 = float(task_stats['timestamp'])
+            else:
+                cpus_system_time_secs0 = 0
+                cpus_user_time_secs0 = 0
+                timestamp0 = 0
 
             time.sleep(1)
 
             task_stats = get_task_agentstatistics(task, agent)
-            cpus_system_time_secs1 = float(task_stats['cpus_system_time_secs'])
-            cpus_user_time_secs1 = float(task_stats['cpus_user_time_secs'])
-            timestamp1 = float(task_stats['timestamp'])
+            if task_stats != None:
+                cpus_system_time_secs1 = float(task_stats['cpus_system_time_secs'])
+                cpus_user_time_secs1 = float(task_stats['cpus_user_time_secs'])
+                timestamp1 = float(task_stats['timestamp'])
+            else:
+                cpus_system_time_secs0 = 0
+                cpus_user_time_secs0 = 0
+                timestamp0 = 0
 
             cpus_time_total0 = cpus_system_time_secs0 + cpus_user_time_secs0
             cpus_time_total1 = cpus_system_time_secs1 + cpus_user_time_secs1
@@ -157,12 +167,21 @@ if __name__ == "__main__":
             usage = float(cpus_time_delta / timestamp_delta) * 100
 
             # RAM usage
-            mem_rss_bytes = int(task_stats['mem_rss_bytes'])
+            if task_stats != None:
+                mem_rss_bytes = int(task_stats['mem_rss_bytes'])
+                mem_limit_bytes = int(task_stats['mem_limit_bytes'])
+                mem_utilization = 100 * (float(mem_rss_bytes) / float(mem_limit_bytes))
+
+            else:
+                mem_rss_bytes = 0
+                mem_limit_bytes = 0
+                mem_utilization = 0
+
+
+            print()
             print ("task", task, "mem_rss_bytes=", mem_rss_bytes)
-            mem_limit_bytes = int(task_stats['mem_limit_bytes'])
-            print ("task", task, "mem_limit_bytes=", mem_limit_bytes)
-            mem_utilization = 100 * (float(mem_rss_bytes) / float(mem_limit_bytes))
             print ("task", task, "mem Utilization=", mem_utilization)
+            print ("task", task, "mem_limit_bytes=", mem_limit_bytes)
             print()
 
             #app_cpu_values.append(cpus_time)
