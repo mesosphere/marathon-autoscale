@@ -1,5 +1,6 @@
 __author__ = 'tkraus'
 
+import os
 import sys
 import requests
 import json
@@ -119,28 +120,62 @@ def get_task_agentstatistics(task, agent):
             task_stats = i['statistics']
             print ('****Specific stats for task',executor_id,'=',task_stats)
             return task_stats
-def timer():
-    print("Successfully completed a cycle, sleeping for 30 seconds ...")
-    time.sleep(30)
+
+def timer(interval):
+    print("Successfully completed a cycle, sleeping for {0} seconds ...".format(interval))
+    time.sleep(interval)
     return
+
+def env_or_req(key):
+    if os.environ.get(key):
+        return {'default': os.environ.get(key)}
+    else:
+        return {'required': True}
 
 if __name__ == "__main__":
     import argparse
-
     print ("This application tested with Python3 only")
     parser = argparse.ArgumentParser(description='Marathon autoscale app.')
-    parser.add_argument('--dcos-master', help='The DNS hostname or IP of your Marathon Instance', required=True)
-    parser.add_argument('--max_mem_percent', help='The Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', required=True, type=float)
-    parser.add_argument('--max_cpu_time', help='The Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', required=True, type=float)
-    parser.add_argument('--trigger_mode', help='Which metric(s) to trigger Autoscale ('and', 'or')', required=True)
-    parser.add_argument('--autoscale_multiplier', help='Autoscale multiplier for triggered Autoscale (ie 1.5)', required=True, type=float)
-    parser.add_argument('--max_instances', help='The Max instances that should ever exist for this application (ie. 20)', required=True, type=int)
-    parser.add_argument('--userid', help='Username for the DCOS cluster')
-    parser.add_argument('--password', help='Password for the DCOS cluster')
-    parser.add_argument('--marathon-app', help='Marathon Application Name to Configure Autoscale for from the Marathon UI', required=True)
-    parser.add_argument('--min_instances', help='Minimum number of instances to maintain', required=True, type=int)
-    parser.add_argument('--cool-down-factor', help='Number of cycles to avoid scaling again', required=True, type=int)
-    parser.add_argument('--trigger_number', help='Number of cycles to avoid scaling again', required=True, type=int)
+    parser.set_defaults()
+    parser.add_argument('--dcos-master', 
+        help='The DNS hostname or IP of your Marathon Instance', 
+        **env_or_req('AS_DCOS_MASTER'))
+    parser.add_argument('--max_mem_percent', 
+        help='The Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', 
+        **env_or_req('AS_MAX_MEM_PERCENT'), type=float)
+    parser.add_argument('--max_cpu_time', 
+        help='The Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', 
+        **env_or_req('AS_MAX_CPU_TIME'), type=float)
+    parser.add_argument('--trigger_mode', 
+        help='Which metric(s) to trigger Autoscale ('and', 'or')', 
+        **env_or_req('AS_TRIGGER_MODE'))
+    parser.add_argument('--autoscale_multiplier', 
+        help='Autoscale multiplier for triggered Autoscale (ie 1.5)', 
+        **env_or_req('AS_AUTOSCALE_MULTIPLIER'), type=float)
+    parser.add_argument('--max_instances', 
+        help='The Max instances that should ever exist for this application (ie. 20)', 
+        **env_or_req('AS_MAX_INSTANCES'), type=int)
+    parser.add_argument('--userid', 
+        help='Username for the DCOS cluster', 
+        **env_or_req('AS_USERID'))
+    parser.add_argument('--password', 
+        help='Password for the DCOS cluster', 
+        **env_or_req('AS_PASSWORD'))
+    parser.add_argument('--marathon-app', 
+        help='Marathon Application Name to Configure Autoscale for from the Marathon UI', 
+        **env_or_req('AS_MARATHON_APP'))
+    parser.add_argument('--min_instances', 
+        help='Minimum number of instances to maintain', 
+        **env_or_req('AS_MIN_INSTANCES'), type=int)
+    parser.add_argument('--cool-down-factor', 
+        help='Number of cycles to avoid scaling again', 
+        **env_or_req('AS_COOL_DOWN_FACTOR'), type=int)
+    parser.add_argument('--trigger_number', 
+        help='Number of cycles to avoid scaling again', 
+        **env_or_req('AS_TRIGGER_NUMBER'), type=int)
+    parser.add_argument('--interval', 
+        help='Time in seconds to wait between checks (ie. 20)', 
+        **env_or_req('AS_INTERVAL'), type=int)
     try:
         args = parser.parse_args()
     except Exception as e:
@@ -159,6 +194,7 @@ if __name__ == "__main__":
     min_instances = float(args.min_instances)
     cool_down_factor = float(args.cool_down_factor)
     trigger_number = float(args.trigger_number)
+    interval = args.interval
 
     if userid is not None:
         dcos_auth_token=dcos_auth_login(dcos_master,userid,password)
@@ -183,7 +219,7 @@ if __name__ == "__main__":
             print ("  Found your Marathon App=", marathon_app)
         else:
             print ("  Could not find your App =", marathon_app)
-            timer()
+            timer(interval)
             continue
         # Return a dictionary comprised of the target app taskId and hostId.
         app_task_dict = aws_marathon.get_app_details(marathon_app)
@@ -215,9 +251,9 @@ if __name__ == "__main__":
                 cpus_user_time_secs1 = float(task_stats['cpus_user_time_secs'])
                 timestamp1 = float(task_stats['timestamp'])
             else:
-                cpus_system_time_secs0 = 0
-                cpus_user_time_secs0 = 0
-                timestamp0 = 0
+                cpus_system_time_secs1 = 0
+                cpus_user_time_secs1 = 0
+                timestamp1 = 0
 
             cpus_time_total0 = cpus_system_time_secs0 + cpus_user_time_secs0
             cpus_time_total1 = cpus_system_time_secs1 + cpus_user_time_secs1
@@ -293,4 +329,4 @@ if __name__ == "__main__":
                 print ("Limits are not exceeded but waiting for trigger_number to be exceeded too to scale down, ", cool_down)
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
-        timer()
+        timer(interval)
