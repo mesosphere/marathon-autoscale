@@ -7,23 +7,16 @@ import json
 import math
 import time
 
+# Disable InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-#dcos_master = input("Enter the DNS hostname or IP of your Marathon Instance : ")
+# Generating CPU stress:
+# yes > /dev/null & 
+# tail -f /dev/null
 
-#max_mem_percent = int(input("Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
-#max_cpu_time = int(input("Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : "))
-#trigger_mode = input("Enter which metric(s) to trigger Autoscale ('and', 'or') : ")
-#autoscale_multiplier = float(input("Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : "))
-#max_instances = int(input("Enter the Max instances that should ever exist for this application (ie. 20) : "))
-#userid = input('Enter the username for the DCOS cluster : ')
-#password = input('Enter the password for the DCOS cluster : ')
-#marathon_app = input("Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : ")
-
-#max_mem_percent = 40
-#max_cpu_time = 40
-#trigger_mode = 'or'
-#max_instances = 10
-#autoscale_multiplier=4
+# Simulating memory usage
+# for i in $(seq 5); do BLOB=$(dd if=/dev/urandom bs=1MB count=14); sleep 3s; echo "iteration $i"; done
 
 class Marathon(object):
     def __init__(self, dcos_master,dcos_auth_token):
@@ -135,6 +128,7 @@ def env_or_req(key):
 if __name__ == "__main__":
     import argparse
     print ("This application tested with Python3 only")
+    
     parser = argparse.ArgumentParser(description='Marathon autoscale app.')
     parser.set_defaults()
     parser.add_argument('--dcos-master', 
@@ -147,7 +141,7 @@ if __name__ == "__main__":
         help='The Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', 
         **env_or_req('AS_MAX_CPU_TIME'), type=float)
     parser.add_argument('--trigger_mode', 
-        help='Which metric(s) to trigger Autoscale ('and', 'or')', 
+        help='Which metric(s) to trigger Autoscale (and, or)', 
         **env_or_req('AS_TRIGGER_MODE'))
     parser.add_argument('--autoscale_multiplier', 
         help='Autoscale multiplier for triggered Autoscale (ie 1.5)', 
@@ -261,12 +255,22 @@ if __name__ == "__main__":
             timestamp_delta = timestamp1 - timestamp0
 
             # CPU percentage usage
+            if timestamp_delta == 0:
+                print ("timestamp_delta is 0")
+                timer(interval)
+                continue
+
             usage = float(cpus_time_delta / timestamp_delta) * 100
 
             # RAM usage
             if task_stats != None:
                 mem_rss_bytes = int(task_stats['mem_rss_bytes'])
                 mem_limit_bytes = int(task_stats['mem_limit_bytes'])
+                if mem_limit_bytes == 0:
+                    print ("mem_limit_bytes is 0")
+                    timer(interval)
+                    continue
+
                 mem_utilization = 100 * (float(mem_rss_bytes) / float(mem_limit_bytes))
 
             else:
