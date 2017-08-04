@@ -19,7 +19,7 @@
       "portMappings": [],
       "privileged": false,
       "parameters": [],
-      "forcePullImage": false
+      "forcePullImage": true
     }
   },
   "healthChecks": [],
