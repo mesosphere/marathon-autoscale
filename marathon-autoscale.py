@@ -1,4 +1,4 @@
-__author__ = 'tkraus'
+__author__ = 'kmcclellan & dobriak'
 
 import os
 import sys
@@ -140,8 +140,14 @@ if __name__ == "__main__":
     parser.add_argument('--max_cpu_time', 
         help='The Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', 
         **env_or_req('AS_MAX_CPU_TIME'), type=float)
+    parser.add_argument('--min_mem_percent',
+        help='The min percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 55)',
+        **env_or_req('AS_MIN_MEM_PERCENT'), type=float)
+    parser.add_argument('--min_cpu_time',
+        help='The min percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 50)',
+        **env_or_req('AS_MIN_CPU_TIME'), type=float)
     parser.add_argument('--trigger_mode', 
-        help='Which metric(s) to trigger Autoscale (and, or)', 
+        help='Which metric(s) to trigger Autoscale (and, or, cpu, mem)',
         **env_or_req('AS_TRIGGER_MODE'))
     parser.add_argument('--autoscale_multiplier', 
         help='Autoscale multiplier for triggered Autoscale (ie 1.5)', 
@@ -178,7 +184,9 @@ if __name__ == "__main__":
 
     dcos_master = args.dcos_master
     max_mem_percent = float(args.max_mem_percent)
+    min_mem_percent = float(args.min_mem_percent)
     max_cpu_time = float(args.max_cpu_time)
+    min_cpu_time = float(args.min_cpu_time)
     trigger_mode = args.trigger_mode
     autoscale_multiplier = float(args.autoscale_multiplier)
     max_instances = float(args.max_instances)
@@ -296,7 +304,11 @@ if __name__ == "__main__":
         #Evaluate whether an autoscale trigger is called for
         print('\n')
         if (trigger_mode == "and"):
-            if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
+            if ((min_cpu_time <= app_avg_cpu <= max_cpu_time) and (min_mem_percent <= app_avg_mem <= max_mem_percent)):
+                print ("CPU and Memory within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
                 print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
                 trigger_var = 0
@@ -315,7 +327,11 @@ if __name__ == "__main__":
             else:
                 print ("Both values were not greater than autoscale targets")
         elif (trigger_mode == "or"):
-            if ((app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent)) and (trigger_var >= trigger_number):
+            if ((min_cpu_time <= app_avg_cpu <= max_cpu_time) and (min_mem_percent <= app_avg_mem <= max_mem_percent)):
+                print ("CPU or Memory within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif ((app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent)) and (trigger_var >= trigger_number):
                 print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
                 trigger_var = 0
@@ -333,4 +349,50 @@ if __name__ == "__main__":
                 print ("Limits are not exceeded but waiting for trigger_number to be exceeded too to scale down, ", cool_down)
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
+        elif (trigger_mode == "cpu"):
+            if (min_cpu_time <= app_avg_cpu <= max_cpu_time):
+                print ("CPU within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif (app_avg_cpu > max_cpu_time) and (trigger_var >= trigger_number):
+                print ("Autoscale triggered based CPU exceeding threshold")
+                aws_marathon.scale_app(marathon_app, autoscale_multiplier)
+                trigger_var = 0
+            elif (app_avg_cpu < max_cpu_time) and (cool_down >= cool_down_factor):
+                print ("Autoscale triggered based on CPU are down the threshold")
+                aws_marathon.scale_down_app(marathon_app, autoscale_multiplier)
+                cool_down = 0
+            elif (app_avg_cpu > max_cpu_time):
+                trigger_var += 1
+                cool_down = 0
+                print ("Limits exceeded but waiting for trigger_number to be exceeded too to scale up, ", trigger_var)
+            elif (app_avg_cpu < max_cpu_time):
+                cool_down += 1
+                trigger_var = 0
+                print ("Limits are not exceeded but waiting for trigger_number to be exceeded too to scale down, ", cool_down)
+            else:
+                print ("CPU values not exceeding threshold")
+        elif (trigger_mode == "mem"):
+            if (min_mem_percent <= app_avg_mem <= max_mem_percent):
+                print ("CPU and Memory within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
+                print ("Autoscale triggered based Mem exceeding threshold")
+                aws_marathon.scale_app(marathon_app, autoscale_multiplier)
+                trigger_var = 0
+            elif (app_avg_mem < max_mem_percent) and (cool_down >= cool_down_factor):
+                print ("Autoscale triggered based on Mem are down the threshold")
+                aws_marathon.scale_down_app(marathon_app, autoscale_multiplier)
+                cool_down = 0
+            elif (app_avg_mem > max_mem_percent):
+                trigger_var += 1
+                cool_down = 0
+                print ("Limits exceeded but waiting for trigger_number to be exceeded too to scale up, ", trigger_var)
+            elif (app_avg_mem < max_mem_percent):
+                cool_down += 1
+                trigger_var = 0
+                print ("Limits are not exceeded but waiting for trigger_number to be exceeded too to scale down, ", cool_down)
+            else:
+                print ("Mem values not exceeding threshold")
         timer(interval)
