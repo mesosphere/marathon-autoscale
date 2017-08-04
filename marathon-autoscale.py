@@ -140,12 +140,12 @@ if __name__ == "__main__":
     parser.add_argument('--max_cpu_time', 
         help='The Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80)', 
         **env_or_req('AS_MAX_CPU_TIME'), type=float)
-        #    parser.add_argument('--min_mem_percent',
-        #        help='The min percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 55)',
-        #        **env_or_req('AS_MIN_MEM_PERCENT'), type=float)
-        #    parser.add_argument('--min_cpu_time',
-        #        help='The min percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 50)',
-        #        **env_or_req('AS_MIN_CPU_TIME'), type=float)
+    parser.add_argument('--min_mem_percent',
+        help='The min percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 55)',
+        **env_or_req('AS_MIN_MEM_PERCENT'), type=float)
+    parser.add_argument('--min_cpu_time',
+        help='The min percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 50)',
+        **env_or_req('AS_MIN_CPU_TIME'), type=float)
     parser.add_argument('--trigger_mode', 
         help='Which metric(s) to trigger Autoscale (and, or, cpu, mem)',
         **env_or_req('AS_TRIGGER_MODE'))
@@ -184,7 +184,9 @@ if __name__ == "__main__":
 
     dcos_master = args.dcos_master
     max_mem_percent = float(args.max_mem_percent)
+    min_mem_percent = float(args.min_mem_percent)
     max_cpu_time = float(args.max_cpu_time)
+    min_cpu_time = float(args.min_cpu_time)
     trigger_mode = args.trigger_mode
     autoscale_multiplier = float(args.autoscale_multiplier)
     max_instances = float(args.max_instances)
@@ -302,7 +304,11 @@ if __name__ == "__main__":
         #Evaluate whether an autoscale trigger is called for
         print('\n')
         if (trigger_mode == "and"):
-            if (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
+            if ((min_cpu_time <= app_avg_cpu <= max_cpu_time) and (min_mem_percent <= app_avg_mem <= max_mem_percent)):
+                print ("CPU and Memory within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif (app_avg_cpu > max_cpu_time) and (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
                 print ("Autoscale triggered based on 'both' Mem & CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
                 trigger_var = 0
@@ -321,7 +327,11 @@ if __name__ == "__main__":
             else:
                 print ("Both values were not greater than autoscale targets")
         elif (trigger_mode == "or"):
-            if ((app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent)) and (trigger_var >= trigger_number):
+            if ((min_cpu_time <= app_avg_cpu <= max_cpu_time) and (min_mem_percent <= app_avg_mem <= max_mem_percent)):
+                print ("CPU or Memory within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif ((app_avg_cpu > max_cpu_time) or (app_avg_mem > max_mem_percent)) and (trigger_var >= trigger_number):
                 print ("Autoscale triggered based Mem 'or' CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
                 trigger_var = 0
@@ -340,7 +350,11 @@ if __name__ == "__main__":
             else:
                 print ("Neither Mem 'or' CPU values exceeding threshold")
         elif (trigger_mode == "cpu"):
-            if (app_avg_cpu > max_cpu_time) and (trigger_var >= trigger_number):
+            if (min_cpu_time <= app_avg_cpu <= max_cpu_time):
+                print ("CPU within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif (app_avg_cpu > max_cpu_time) and (trigger_var >= trigger_number):
                 print ("Autoscale triggered based CPU exceeding threshold")
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
                 trigger_var = 0
@@ -359,7 +373,11 @@ if __name__ == "__main__":
             else:
                 print ("CPU values not exceeding threshold")
         elif (trigger_mode == "mem"):
-            if (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
+            if (min_mem_percent <= app_avg_mem <= max_mem_percent):
+                print ("CPU and Memory within thresholds")
+                trigger_var = 0
+                cool_down = 0
+            elif (app_avg_mem > max_mem_percent) and (trigger_var >= trigger_number):
                 print ("Autoscale triggered based Mem exceeding threshold")
                 aws_marathon.scale_app(marathon_app, autoscale_multiplier)
                 trigger_var = 0
