@@ -8,7 +8,9 @@ import os
 import sys
 import time
 
+import jwt
 import requests
+
 # Disable InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # pylint: disable=F0401
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning) # pylint: disable=E1101
@@ -49,6 +51,41 @@ class Autoscaler():
             level=level,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.log = logging.getLogger("marathon-autoscaler")
+
+    def get_auth_token(self):
+        """Using a service account, get or renew an auth token
+        Returns:
+            dcos_token to be used for authentication
+        """
+        # Get the certificate authority
+        requests.get(self.dcos_master + '/ca/dcos-ca.crt')
+
+        # Get the private key from the autoscaler secret
+        saas = json.loads(os.environ.get('SAAS'))
+
+        # Create a JWT token
+        jwt_token = jwt.encode({'uid':'autoscaling'},
+                               saas['private_key'], algorithm='RS256')
+        auth_data = json.dumps({"uid":"autoscaling",
+                                "token": jwt_token.decode('utf-8')})
+
+        # Create or renew auth token for the service account
+        response = requests.post(self.dcos_master + "/acs/api/v1/auth/login",
+                                 headers={"Content-type": "application/json"},
+                                 data=auth_data,
+                                 verify="dcos-ca.crt")
+        result = response.json()
+        # TODO check if token is there, exit if not
+        return result['token']
+
+    def dcos_rest(self, method, path, **kwargs):
+        """Common querying procedure that handles 401 errors
+        Args:
+            path (str): URI path after the mesos master address
+        Returns:
+            requests.response of the query
+        """
+        #response = requests.request(method, self.dcos_master + path,  )
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
