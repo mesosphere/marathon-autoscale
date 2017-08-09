@@ -14,9 +14,9 @@ chmod 400 sa-pub.pem
 dcos security org service-accounts create -p sa-pub.pem -d "autoscaling service account" autoscaling
 dcos security org service-accounts show autoscaling
 
-# Create a secret (saas) for autoscaling
+# Create a secret (as_secret) for autoscaling
 # Permissive
-dcos security secrets create-sa-secret sa-priv.pem autoscaling saas
+dcos security secrets create-sa-secret sa-priv.pem autoscaling as_secret
 
 # Strict
 #dcos security secrets create-sa-secret --strict sa-priv.pem autoscaling saas

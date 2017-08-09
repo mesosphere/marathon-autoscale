@@ -40,8 +40,10 @@ class Autoscaler():
         self.app_instances = 0
         self.trigger_var = 0
         self.cool_down = 0
+        self.dcos_headers = {}
 
         self.parse_arguments()
+        # Start logging
         if self.verbose:
             level = logging.DEBUG
         else:
@@ -51,23 +53,35 @@ class Autoscaler():
             level=level,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         self.log = logging.getLogger("marathon-autoscaler")
+        # Set auth header
+        self.authenticate()
 
-    def get_auth_token(self):
-        """Using a service account, get or renew an auth token
+    def authenticate(self):
+        """Using a userid/pass or a service account secret,
+        get or renew JWT auth token
         Returns:
-            dcos_token to be used for authentication
+            Sets dcos_headers to be used for authentication
         """
         # Get the certificate authority
-        requests.get(self.dcos_master + '/ca/dcos-ca.crt')
+        if not os.path.isfile('dcos-ca.crt'):
+            response = requests.get(self.dcos_master + '/ca/dcos-ca.crt', verify=False)
+            with open("dcos-ca.crt", "wb") as crt_file:
+                crt_file.write(response.content)
 
-        # Get the private key from the autoscaler secret
-        saas = json.loads(os.environ.get('SAAS'))
-
-        # Create a JWT token
-        jwt_token = jwt.encode({'uid':'autoscaling'},
-                               saas['private_key'], algorithm='RS256')
-        auth_data = json.dumps({"uid":"autoscaling",
-                                "token": jwt_token.decode('utf-8')})
+        if ('AS_USERID' in os.environ.keys()) and ('AS_PASSWORD' in os.environ.keys()):
+            auth_data = json.dumps({'uid' : os.environ.get('AS_USERID'),
+                                    'password' : os.environ.get('AS_PASSWORD')})
+        elif 'AS_SECRET' in os.environ.keys():
+            # Get the private key from the autoscaler secret
+            saas = json.loads(os.environ.get('AS_SECRET'))
+            # Create a JWT token
+            jwt_token = jwt.encode({'uid':'autoscaling'},
+                                   saas['private_key'], algorithm='RS256')
+            auth_data = json.dumps({"uid":"autoscaling",
+                                    "token": jwt_token.decode('utf-8')})
+        else:
+            self.dcos_headers = {'Content-type': 'application/json'}
+            return
 
         # Create or renew auth token for the service account
         response = requests.post(self.dcos_master + "/acs/api/v1/auth/login",
@@ -75,17 +89,49 @@ class Autoscaler():
                                  data=auth_data,
                                  verify="dcos-ca.crt")
         result = response.json()
-        # TODO check if token is there, exit if not
-        return result['token']
+        if 'token' not in result:
+            sys.stderr.write("Unable to authenticate or renew JWT token: %s", result)
+            sys.exit(1)
 
-    def dcos_rest(self, method, path, **kwargs):
+        self.dcos_headers = {
+            'Authorization': 'token=' + result['token'],
+            'Content-type': 'application/json'}
+
+    def dcos_rest(self, method, path, data=None):
         """Common querying procedure that handles 401 errors
         Args:
             path (str): URI path after the mesos master address
         Returns:
-            requests.response of the query
+            JSON requests.response.content result of the query
         """
-        #response = requests.request(method, self.dcos_master + path,  )
+        done = False
+        while not done:
+
+            if data is None:
+                response = requests.request(method, self.dcos_master + path,
+                                            headers=self.dcos_headers,
+                                            verify=False)
+            else:
+                response = requests.request(method, self.dcos_master + path,
+                                            headers=self.dcos_headers,
+                                            data=data,
+                                            verify=False)
+
+            self.log.debug("%s %s %s", method, path, response.status_code)
+            done = True
+            if response.status_code != 200:
+                if response.status_code == 401:
+                    self.log.info("Authenticating")
+                    self.authenticate()
+                    done = False
+            else:
+                response.raise_for_status()
+
+        result = response.content
+        if not result or not result.strip():
+            result = {}
+
+        return json.loads(result)
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
@@ -240,21 +286,27 @@ class Autoscaler():
         if self.app_instances != target_instances:
             data = {'instances': target_instances}
             json_data = json.dumps(data)
-            response = requests.put(self.dcos_master + '/service/marathon/v2/apps/' +
-                                    self.marathon_app, json_data,
-                                    headers=self.dcos_headers, verify=False)
-            self.log.debug("scale_app returned status code %s", response.status_code)
+            #response = requests.put(self.dcos_master + '/service/marathon/v2/apps/' +
+            #                        self.marathon_app, json_data,
+            #                        headers=self.dcos_headers, verify=False)
+            response = self.dcos_rest("put",
+                                      '/service/marathon/v2/apps/' + self.marathon_app,
+                                      data=json_data)
+            #self.log.debug("scale_app returned status code %s", response.status_code)
             # self.app_instances will be updated next time get_app_details is called
+            self.log.debug("scale_app %s", response)
 
     def get_app_details(self):
         """Retrieve metadata about marathon_app
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
-        response = requests.get(self.dcos_master +
-                                '/service/marathon/v2/apps/' +
-                                self.marathon_app, headers=self.dcos_headers,
-                                verify=False).json()
+        #response = requests.get(self.dcos_master +
+        #                        '/service/marathon/v2/apps/' +
+        #                        self.marathon_app, headers=self.dcos_headers,
+        #                        verify=False).json()
+        response = self.dcos_rest("get", '/service/marathon/v2/apps/' +
+                                  self.marathon_app)
         if response['app']['tasks'] == []:
             self.log.error('No task data in marathon for app %s', self.marathon_app)
         else:
@@ -277,9 +329,10 @@ class Autoscaler():
         Returns:
             a list of all marathon apps
         """
-        response = requests.get(self.dcos_master +
-                                '/service/marathon/v2/apps',
-                                headers=self.dcos_headers, verify=False).json()
+        #response = requests.get(self.dcos_master +
+        #                        '/service/marathon/v2/apps',
+        #                        headers=self.dcos_headers, verify=False).json()
+        response = self.dcos_rest("get", '/service/marathon/v2/apps')
         if response['apps'] == []:
             self.log.error("No Apps found on Marathon")
             sys.exit(1)
@@ -333,12 +386,6 @@ class Autoscaler():
                             help=('The Max instances that should ever exist'
                                   ' for this application (ie. 20)'),
                             **self.env_or_req('AS_MAX_INSTANCES'), type=int)
-        parser.add_argument('--userid',
-                            help='Username for the DCOS cluster',
-                            **self.env_or_req('AS_USERID'))
-        parser.add_argument('--password',
-                            help='Password for the DCOS cluster',
-                            **self.env_or_req('AS_PASSWORD'))
         parser.add_argument('--marathon-app',
                             help=('Marathon Application Name to Configure '
                                   'Autoscale for from the Marathon UI'),
@@ -373,8 +420,6 @@ class Autoscaler():
         self.trigger_mode = args.trigger_mode
         self.autoscale_multiplier = float(args.autoscale_multiplier)
         self.max_instances = float(args.max_instances)
-        self.userid = args.userid
-        self.password = args.password
         self.marathon_app = args.marathon_app
         self.min_instances = float(args.min_instances)
         self.cool_down_factor = float(args.cool_down_factor)
@@ -382,28 +427,7 @@ class Autoscaler():
         self.interval = args.interval
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
 
-        if self.userid is not None:
-            self.dcos_auth_token = self.dcos_auth_login()
-            self.dcos_headers = {
-                'Authorization': 'token=' + self.dcos_auth_token,
-                'Content-type': 'application/json'}
-            #self.log.debug("Auth Token is %s", self.dcos_auth_token)
-        else:
-            self.dcos_auth_token = None
-            self.dcos_headers = {'Content-type': 'application/json'}
 
-
-    def dcos_auth_login(self):
-        """
-        Will login to the DCOS ACS Service and RETURN A JWT TOKEN for
-        subsequent API requests to Marathon, Mesos, etc
-        """
-        rawdata = {'uid' : self.userid, 'password' : self.password}
-        login_headers = {'Content-type': 'application/json'}
-        response = requests.post(self.dcos_master + '/acs/api/v1/auth/login',
-                                 headers=login_headers,
-                                 data=json.dumps(rawdata), verify=False).json()
-        return response['token']
 
     def get_task_agent_stats(self, task, agent):
         """ Get the performance Metrics for all the tasks for the marathon
@@ -416,11 +440,12 @@ class Autoscaler():
             statistics for the specific task
         """
 
-        response = requests.get(self.dcos_master + '/slave/' + agent +
-                                '/monitor/statistics.json', verify=False,
-                                headers=self.dcos_headers,
-                                allow_redirects=True).json()
-
+        #response = requests.get(self.dcos_master + '/slave/' + agent +
+        #                        '/monitor/statistics.json', verify=False,
+        #                        headers=self.dcos_headers,
+        #                        allow_redirects=True).json()
+        response = self.dcos_rest("get", '/slave/' + agent +
+                                  '/monitor/statistics.json')
         for i in response:
             executor_id = i['executor_id']
             if executor_id == task:
