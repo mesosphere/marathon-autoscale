@@ -1,93 +1,69 @@
 # marathon-autoscale
-Simple Proof of Concept application for Scaling Application running on Marathon and Mesos based on Application's based on the utilization metrics Mesos reports. Note: This trigger metrics can be changed to be network related in order to have a more accurate representation of utilization that requires scaling. The application runs on any system that has Python 3 installed and has access to the Marathon server via HTTP TCP Port 80 and the Mesos Agent nodes over TCP port 5051. marathon-autoscale.py is intended to demonstrate what is possible when you run your applications on Marathon and Mesos. It periodically monitors the aggregate CPU and memory utilization for all the individual tasks running on the Mesos Agents that make up the specified Marathon application. When the threshold you set for these metrics is reached, marathon-autoscale.py will add instances to the application based on the multiplier you specify.
+Dockerized container autoscaler that can be run under Marathon management to dynamically scale a service running on DC/OS.
 
-## Objective
-To provide a simple AutoScale Automation example running on top of DCOS and Marathon.
 
 ## Prerequisites
 A running DCOS cluster.
-Python 3 installed on the system you will run marathon-autoscale.py. Note: This can be one of the Mesos master nodes.
-An application running on the native Marathon instance that you intend to autoscale.
-TCP Port 80 open to the Marathon instance and TCP Port 5051 open to the Mesos Agent hosts.
+
+If running on a DC/OS cluster in Permissive or Strict mode, an user or service account with the appropriate permissions to modify Marathon jobs.  An example script for setting up a service account can be found in create-service-account.sh
+
+## Building the Docker container
+
+How to build the container:
+    
+    docker build .
+    docker tag <tag-id> <docker-hub-name>:marathon-autoscale:latest
+    docker push <docker-hub-name>:marathon-autoscale:latest
 
 ## Program Execution
-The python program runs on any system that has Python3 installed and has access to the Marathon server and the Mesos Agent nodes over HTTP. The program will use standard python modules for REST API consumption such as requests and json.
+The python program runs on marathon and can be executed using the following command:
 
-#### $ python marathon-autoscale.py
+#### $ dcos marathon app add marathon.json
 
+Where the marathon.json has been built from one of the samples:
+    sample-autoscale-noauth-marathon.json #security disabled or OSS DC/OS
+    sample-autoscale-username-marathon.json #security permissive or strict on Enterprise DC/OS, using username and password (password stored as a secret)
+    sample-autoscale-svcacct-marathon.json #security permissive or strict on Enterprise DC/OS, using service account and private key (private key stored as a secret)
 
-Input paramters user will be prompted for
+Input paramters user will be prompted for:
 
-	--marathon_host (string) - FQDN or IP of the DCOS Master host (without the http://).
-	--marathon_app (string) - Name of the Marathon App without the "/" to configure autoscale on.
-	--max_mem_percent (int) - Trigger percentage of Avg Mem Utilization across all tasks for the target Marathon App before scaleout is triggered.
-	--max_cpu_time (int) - Trigger Avg CPU time across all tasks for the target Marathon App before scaleout is triggered.
-	--trigger_mode (string) - 'both' or 'and' determines whether both cpu and mem must be triggered or just one or the other.
-	--autoscale_multiplier (float) - The number that current instances will be multiplied against to decide how many instances to add during a scaleout operation.
-	--max_instances (int) - The Ceiling for number of instances to stop scaling out EVEN if thresholds are crossed.
+    AS_MARATHON_APP: # app to autoscale
+    AS_TRIGGER_MODE: and | or | cpu | mem #which scaling mode you want
+    AS_MIN_INSTANCES: #min number of instances, don’t make less than 2
+    AS_MAX_INSTANCES: #max number of instances, must be greater than AS_MIN_INSTANCES
+    AS_DCOS_MASTER: #don’t change unless running marathon-on-marathon
+    AS_MAX_CPU_TIME #max average cpu time as float, e.g. 80 or 80.5
+    AS_MIN_CPU_TIME #min average cpu time as float, e.g. 55 or 55.5
+    AS_MAX_MEM_PERCENT #max avg mem utilization percent as float, e.g. 75 or 75.0
+    AS_MIN_MEM_PERCENT #min avg men utilization percent as float, e.g. 55 or 55.0
+    AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
+    AS_TRIGGER_NUMBER # how many times should we pole before scaling up
+    AS_INTERVAL #how often should we poll in seconds
 
-## Installation
+If you are using an authentication:
 
-core@ip-10-0-6-238 ~/ $ git clone https://github.com/mesosphere/marathon-autoscale.git
-core@ip-10-0-6-238 ~/ $ cd marathon-autoscale
+    AS_USERID #username of the user or service account with access to scale the service
+    --and either--
+    AS_PASSWORD: secret0 #password of the userid above ideally from the secret store
+    AS_SECRET: secret0 #private key of the userid above ideally from the secret store
 
-## Example
+## Scaling Modes
 
-	root@ip-10-2-6-238 ~/marathon-autoscale $ python marathon-autoscale.py 
-	Enter the Marathon Application Name to Configure Autoscale for from the Marathon UI : basic-0
-	Enter the Max percent of Mem Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : 5
-	Enter the Max percent of CPU Usage averaged across all Application Instances to trigger Autoscale (ie. 80) : 5
-	Enter which metric(s) to trigger Autoscale ('and', 'or') : or
-	Enter Autoscale multiplier for triggered Autoscale (ie 1.5) : 2
-	Enter the Max instances that should ever exist for this application (ie. 20) : 10
-	This application tested with Python3 only
+#### AND 
 
-	The following apps exist in Marathon... ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
-	Found your Marathon App= basic-0
-	basic-0 has 4 deployed instances
+In this mode, the system will only scale the service up or down when both CPU and Memory have been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).  Rarely used.
 
-    Marathon  App 'tasks' for basic-0 are= {'basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5': '10.0.1.175'}
-	
-	Combined Task CPU Kernel and User Time for task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 = 2.11
-	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2613248
-	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.933779761904762
+#### OR 
 
-	Combined Task CPU Kernel and User Time for task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 = 0.94
-	task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2576384
-	task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-	task basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5 mem Utilization= 5.850074404761905
+In this mode, the system will scale the service up or down when either the CPU or Memory have been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).
 
-	Combined Task CPU Kernel and User Time for task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 = 1.87
-	task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2609152
-	task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-	task basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5 mem Utilization= 5.924479166666666
+#### CPU 
 
-	Combined Task CPU Kernel and User Time for task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 = 1.02
-	task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2555904
-	task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-	task basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5 mem Utilization= 5.803571428571429
+In this mode, the system will scale the service up or down when the CPU has been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).
 
-	Current Average  CPU Time for app basic-0 = 1.4849999999999999
-	Current Average Mem Utilization for app basic-0 = 5.877976190476192
+#### MEM 
 
+In this mode, the system will scale the service up or down when the Memory has been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).
 
-	Autoscale triggered based Mem 'or' CPU exceeding threshold
-	Scale_app return status code = 200
-	Successfully completed a cycle, sleeping for 30 seconds ...
-	
-	Found the following App LIST on Marathon = ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
-	The following apps exist in Marathon... ['tk-hacked-http-server', 'apacheftp-java-docker', 'basic-0']
-	  Found your Marathon App= basic-0
-	basic-0 has 8 deployed instances
-
-    Marathon  App 'tasks' for basic-0 are= {'basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.371d5233-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.4a85d80a-9788-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.2f7dcc49-9796-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.2f7dcc4a-9796-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.371d0412-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.175', 'basic-0.371d7945-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.61', 'basic-0.371d5234-97a3-11e5-8fff-06b1473e3fa5': '10.0.1.175'}
-
-	Combined Task CPU Kernel and User Time for task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 = 2.11
-	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_rss_bytes= 2625536
-	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem_limit_bytes= 44040192
-	task basic-0.fbd97357-9783-11e5-8fff-06b1473e3fa5 mem Utilization= 5.961681547619048
-	
-DEMONSTRATION !!!
 
 
