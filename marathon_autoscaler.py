@@ -71,13 +71,13 @@ class Autoscaler():
         if ('AS_USERID' in os.environ.keys()) and ('AS_PASSWORD' in os.environ.keys()):
             auth_data = json.dumps({'uid' : os.environ.get('AS_USERID'),
                                     'password' : os.environ.get('AS_PASSWORD')})
-        elif 'AS_SECRET' in os.environ.keys():
+        elif ('AS_SECRET' in os.environ.keys()) and ('AS_USERID' in os.environ.keys()):
             # Get the private key from the autoscaler secret
             saas = json.loads(os.environ.get('AS_SECRET'))
             # Create a JWT token
-            jwt_token = jwt.encode({'uid':'autoscaling'},
+            jwt_token = jwt.encode({'uid': os.environ.get('AS_USERID')},
                                    saas['private_key'], algorithm='RS256')
-            auth_data = json.dumps({"uid":"autoscaling",
+            auth_data = json.dumps({"uid": os.environ.get('AS_USERID'),
                                     "token": jwt_token.decode('utf-8')})
         else:
             self.dcos_headers = {'Content-type': 'application/json'}
