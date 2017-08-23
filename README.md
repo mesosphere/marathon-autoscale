@@ -19,8 +19,8 @@ How to build the container:
 
 The create_service_account.sh script takes two parameters: 
 
-Service Account Name - the name of the service account you want to create
-Namespace Path - the path to launch this service under marathon management.  e.g. / or /dev
+    Service-Account-Name #the name of the service account you want to create
+    Namespace-Path #the path to launch this service under marathon management.  e.g. / or /dev
 
 ####    $ ./create-service-account.sh [service-account-name] [namespace-path]
 
@@ -30,6 +30,7 @@ The python program runs on marathon and can be executed using the following comm
 #### $ dcos marathon app add marathon.json
 
 Where the marathon.json has been built from one of the samples:
+
     sample-autoscale-noauth-marathon.json #security disabled or OSS DC/OS
     sample-autoscale-username-marathon.json #security permissive or strict on Enterprise DC/OS, using username and password (password stored as a secret)
     sample-autoscale-svcacct-marathon.json #security permissive or strict on Enterprise DC/OS, using service account and private key (private key stored as a secret)
