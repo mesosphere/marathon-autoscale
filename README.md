@@ -19,10 +19,10 @@ How to build the container:
 
 The create_service_account.sh script takes two parameters: 
 
-    Service Account Name - the name of the service account you want to create
-    Namespace Path - the path to launch this service under marathon management.  e.g. / or /dev
+Service Account Name - the name of the service account you want to create
+Namespace Path - the path to launch this service under marathon management.  e.g. / or /dev
 
-####    create-service-account.sh <service-account-name> <namespace-path>
+####    $ ./create-service-account.sh [service-account-name] [namespace-path]
 
 ## Program Execution
 The python program runs on marathon and can be executed using the following command:
