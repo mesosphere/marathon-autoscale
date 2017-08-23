@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-if [ -z ${1+x} ]; then echo "Principal name is unset"; else echo "Principal is set to '$1'"; fi
-if [ -z ${2+x} ]; then echo "Namespace is unset"; else echo "Namespace is set to '$2'"; fi
+if [ -z ${1+x} ]; then echo "Principal name is unset"; exit 1; else echo "Principal is set to '$1'"; fi
+if [ -z ${2+x} ]; then echo "Namespace is unset"; exit 1; else echo "Namespace is set to '$2'"; fi
 
 SERVICE_PRINCIPAL=$1
 NAMESPACE="${2/\//%252F}"
