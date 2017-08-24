@@ -49,7 +49,7 @@
     "AS_MIN_INSTANCES": "2",
     "AS_COOL_DOWN_FACTOR": "4",
     "AS_MAX_INSTANCES": "6",
-    "AS_DCOS_MASTER": "https://marathon.mesos",
+    "AS_DCOS_MASTER": "https://leader.mesos",
     "AS_MAX_CPU_TIME": "80",
     "AS_MIN_CPU_TIME": "55",
     "AS_USERID": "bootstrapuser",
