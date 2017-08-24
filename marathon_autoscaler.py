@@ -286,9 +286,6 @@ class Autoscaler():
         if self.app_instances != target_instances:
             data = {'instances': target_instances}
             json_data = json.dumps(data)
-            #response = requests.put(self.dcos_master + '/service/marathon/v2/apps/' +
-            #                        self.marathon_app, json_data,
-            #                        headers=self.dcos_headers, verify=False)
             response = self.dcos_rest("put",
                                       '/service/marathon/v2/apps/' + self.marathon_app,
                                       data=json_data)
@@ -301,10 +298,6 @@ class Autoscaler():
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
-        #response = requests.get(self.dcos_master +
-        #                        '/service/marathon/v2/apps/' +
-        #                        self.marathon_app, headers=self.dcos_headers,
-        #                        verify=False).json()
         response = self.dcos_rest("get", '/service/marathon/v2/apps/' +
                                   self.marathon_app)
         if response['app']['tasks'] == []:
@@ -329,9 +322,6 @@ class Autoscaler():
         Returns:
             a list of all marathon apps
         """
-        #response = requests.get(self.dcos_master +
-        #                        '/service/marathon/v2/apps',
-        #                        headers=self.dcos_headers, verify=False).json()
         response = self.dcos_rest("get", '/service/marathon/v2/apps')
         if response['apps'] == []:
             self.log.error("No Apps found on Marathon")
@@ -440,10 +430,6 @@ class Autoscaler():
             statistics for the specific task
         """
 
-        #response = requests.get(self.dcos_master + '/slave/' + agent +
-        #                        '/monitor/statistics.json', verify=False,
-        #                        headers=self.dcos_headers,
-        #                        allow_redirects=True).json()
         response = self.dcos_rest("get", '/slave/' + agent +
                                   '/monitor/statistics.json')
         for i in response:
@@ -574,7 +560,6 @@ class Autoscaler():
                     self.timer()
                     continue
 
-                #app_cpu_values.append(cpus_time)
                 app_cpu_values.append(cpu_usage)
                 app_mem_values.append(mem_utilization)
 
