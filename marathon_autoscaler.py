@@ -2,6 +2,7 @@
 """
 import argparse
 import json
+import json.tool
 import logging
 import math
 import os
@@ -32,6 +33,7 @@ class Autoscaler():
     cpu and mem, cpu or mem. The checks are performed on a configurable
     interval.
     """
+    ERR_THRESHOLD = 10 # Maximum number of attempts to decode a response
     def __init__(self):
         """Initialize the object with data from the command line or environment
         variables. Log in into DCOS if username / password are provided.
@@ -104,6 +106,7 @@ class Autoscaler():
         Returns:
             JSON requests.response.content result of the query
         """
+        err_num = 0
         done = False
         while not done:
 
@@ -124,14 +127,26 @@ class Autoscaler():
                     self.log.info("Authenticating")
                     self.authenticate()
                     done = False
-            else:
-                response.raise_for_status()
+                else:
+                    response.raise_for_status()
 
-        result = response.content
-        if not result or not result.strip():
-            result = {}
+            content = response.content.strip()
+            if not content:
+                content = "{}"
 
-        return json.loads(result)
+            try:
+                result = json.loads(content)
+                return result
+            except json.JSONDecodeError as dec_err:
+                done = False
+                err_num += 1
+                self.log.error("Non JSON result returned: %s", dec_err)
+                if err_num > self.ERR_THRESHOLD:
+                    self.log.error("FATAL: Threshold of JSON parsing errors "
+                                   "exceeded. Shutting down.")
+                    sys.exit(1)
+
+                self.timer()
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
