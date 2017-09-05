@@ -2,6 +2,7 @@
 """
 import argparse
 import json
+import json.tool
 import logging
 import math
 import os
@@ -32,6 +33,7 @@ class Autoscaler():
     cpu and mem, cpu or mem. The checks are performed on a configurable
     interval.
     """
+    ERR_THRESHOLD = 10 # Maximum number of attempts to decode a response
     def __init__(self):
         """Initialize the object with data from the command line or environment
         variables. Log in into DCOS if username / password are provided.
@@ -104,6 +106,7 @@ class Autoscaler():
         Returns:
             JSON requests.response.content result of the query
         """
+        err_num = 0
         done = False
         while not done:
 
@@ -124,14 +127,26 @@ class Autoscaler():
                     self.log.info("Authenticating")
                     self.authenticate()
                     done = False
-            else:
-                response.raise_for_status()
+                else:
+                    response.raise_for_status()
 
-        result = response.content
-        if not result or not result.strip():
-            result = {}
+            content = response.content.strip()
+            if not content:
+                content = "{}"
 
-        return json.loads(result)
+            try:
+                result = json.loads(content)
+                return result
+            except json.JSONDecodeError as dec_err:
+                done = False
+                err_num += 1
+                self.log.error("Non JSON result returned: %s", dec_err)
+                if err_num > self.ERR_THRESHOLD:
+                    self.log.error("FATAL: Threshold of JSON parsing errors "
+                                   "exceeded. Shutting down.")
+                    sys.exit(1)
+
+                self.timer()
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
@@ -286,9 +301,6 @@ class Autoscaler():
         if self.app_instances != target_instances:
             data = {'instances': target_instances}
             json_data = json.dumps(data)
-            #response = requests.put(self.dcos_master + '/service/marathon/v2/apps/' +
-            #                        self.marathon_app, json_data,
-            #                        headers=self.dcos_headers, verify=False)
             response = self.dcos_rest("put",
                                       '/service/marathon/v2/apps/' + self.marathon_app,
                                       data=json_data)
@@ -301,10 +313,6 @@ class Autoscaler():
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
-        #response = requests.get(self.dcos_master +
-        #                        '/service/marathon/v2/apps/' +
-        #                        self.marathon_app, headers=self.dcos_headers,
-        #                        verify=False).json()
         response = self.dcos_rest("get", '/service/marathon/v2/apps/' +
                                   self.marathon_app)
         if response['app']['tasks'] == []:
@@ -329,9 +337,6 @@ class Autoscaler():
         Returns:
             a list of all marathon apps
         """
-        #response = requests.get(self.dcos_master +
-        #                        '/service/marathon/v2/apps',
-        #                        headers=self.dcos_headers, verify=False).json()
         response = self.dcos_rest("get", '/service/marathon/v2/apps')
         if response['apps'] == []:
             self.log.error("No Apps found on Marathon")
@@ -440,10 +445,6 @@ class Autoscaler():
             statistics for the specific task
         """
 
-        #response = requests.get(self.dcos_master + '/slave/' + agent +
-        #                        '/monitor/statistics.json', verify=False,
-        #                        headers=self.dcos_headers,
-        #                        allow_redirects=True).json()
         response = self.dcos_rest("get", '/slave/' + agent +
                                   '/monitor/statistics.json')
         for i in response:
@@ -574,7 +575,6 @@ class Autoscaler():
                     self.timer()
                     continue
 
-                #app_cpu_values.append(cpus_time)
                 app_cpu_values.append(cpu_usage)
                 app_mem_values.append(mem_utilization)
 
