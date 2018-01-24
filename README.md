@@ -49,6 +49,7 @@ Input paramters user will be prompted for:
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
     AS_TRIGGER_NUMBER # how many times should we pole before scaling up
     AS_INTERVAL #how often should we poll in seconds
+    AS_AUTOSCALE_MULTIPLIER # The number by which current instances will be multiplied (scale-out) or divided (scale-in). This determines how many instances to add during scale-out, or remove during scale-in.
 
 **Notes** 
 
