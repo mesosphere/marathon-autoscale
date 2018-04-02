@@ -152,13 +152,13 @@ class Autoscaler():
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    def autoscale(self, app_avg_cpu, app_avg_mem, queue_message_len):
+    def autoscale(self, app_avg_cpu, app_avg_mem, num_of_messages):
         """Check the marathon_app's average cpu and or memory usage and make decision
         about scaling up or down
         Args:
             app_avg_cpu(float): The average cpu utilization across all tasks for marathon_app
             app_avg_mem(float): The average memory utilization across all tasks for marathon_app
-            queue_message_len: The approximate number of visible messages in the queue
+            num_of_messages: The approximate number of visible messages in the sqs queue
         """
         if self.trigger_mode == "and":
             if ((self.min_cpu_time <= app_avg_cpu <= self.max_cpu_time)
@@ -282,28 +282,28 @@ class Autoscaler():
             else:
                 self.log.info("Mem usage not exceeding threshold")
         elif self.trigger_mode == "sqs":
-            if self.min_sqs_length <= queue_message_len <= self.max_sqs_length:
+            if self.min_sqs_length <= num_of_messages <= self.max_sqs_length:
                 self.log.info("Queue length within thresholds")
                 self.trigger_var = 0
                 self.cool_down = 0
-            elif ((queue_message_len > self.max_sqs_length) and
+            elif ((num_of_messages > self.max_sqs_length) and
                   (self.trigger_var >= self.trigger_number)):
                 self.log.info("Autoscale triggered based on queue exceeding threshold")
                 self.scale_app(True)
                 self.trigger_var = 0
-            elif ((queue_message_len < self.max_sqs_length) and
+            elif ((num_of_messages < self.max_sqs_length) and
                   (self.cool_down >= self.cool_down_factor)):
                 self.log.info("Autoscale triggered based on queue below the threshold")
                 self.scale_app(False)
                 self.cool_down = 0
-            elif queue_message_len > self.max_sqs_length:
+            elif num_of_messages > self.max_sqs_length:
                 self.trigger_var += 1
                 self.cool_down = 0
                 self.log.info(("Queue length exceeded but waiting for "
                                "trigger_number to be exceeded too to scale "
                                "up %s of %s"),
                               self.trigger_var, self.trigger_number)
-            elif queue_message_len < self.max_sqs_length:
+            elif num_of_messages < self.max_sqs_length:
                 self.cool_down += 1
                 self.trigger_var = 0
                 self.log.info(("Queue length are not exceeded but waiting for "
@@ -667,12 +667,15 @@ class Autoscaler():
             self.log.info("Current Average Mem Utilization for app %s = %s",
                           self.marathon_app, app_avg_mem)
 
-            queue_message_len = self.get_sqs_length(self.sqs_name, self.region)
-            self.log.info("Current available messages for queue %s = %s",
-                          self.sqs_name, queue_message_len)
+            # Determine if SQS name is present and trigger mode is SQS
+            num_of_messages = 0.0
+            if self.sqs_name is not None and self.trigger_mode == 'sqs':
+                num_of_messages = float(self.get_sqs_length(self.sqs_name, self.region))
+                self.log.info("Current available messages for queue %s = %s",
+                              self.sqs_name, num_of_messages)
 
             #Evaluate whether an autoscale trigger is called for
-            self.autoscale(app_avg_cpu, app_avg_mem, queue_message_len)
+            self.autoscale(app_avg_cpu, app_avg_mem, num_of_messages)
             self.timer()
 
 if __name__ == "__main__":
