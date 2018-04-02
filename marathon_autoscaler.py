@@ -662,12 +662,17 @@ class Autoscaler():
             app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
             self.log.info("Current average CPU time for app %s = %s",
                           self.marathon_app, app_avg_cpu)
+
             app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
             self.log.info("Current Average Mem Utilization for app %s = %s",
                           self.marathon_app, app_avg_mem)
 
+            queue_message_len = self.get_sqs_length(self.sqs_name, self.region)
+            self.log.info("Current available messages for queue %s = %s",
+                          self.sqs_name, queue_message_len)
+
             #Evaluate whether an autoscale trigger is called for
-            self.autoscale(app_avg_cpu, app_avg_mem, 0)
+            self.autoscale(app_avg_cpu, app_avg_mem, queue_message_len)
             self.timer()
 
 if __name__ == "__main__":
