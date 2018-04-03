@@ -403,11 +403,10 @@ class Autoscaler():
                                   ' all Application Instances to trigger '
                                   'Autoscale (ie. 80)'),
                             **self.env_or_req('AS_MAX_CPU_TIME'), type=float)
-        parser.add_argument('--max_sqs_length',
+        parser.add_argument('--max_sqs_length', action='store', default='0',
                             help=('The max number of messages waiting in the'
                                   ' Simple Queue Service to trigger '
-                                  'Autoscale (ie. 20)'),
-                            **self.env_or_req('AS_MAX_SQS_LENGTH'), type=float)
+                                  'Autoscale (ie. 20)'), type=float)
         parser.add_argument('--min_mem_percent',
                             help=('The min percent of Mem Usage averaged across'
                                   ' all Application Instances to trigger '
@@ -418,11 +417,10 @@ class Autoscaler():
                                   ' all Application Instances to trigger '
                                   'Autoscale (ie. 50)'),
                             **self.env_or_req('AS_MIN_CPU_TIME'), type=float)
-        parser.add_argument('--min_sqs_length',
+        parser.add_argument('--min_sqs_length', action='store', default='0',
                             help=('The min number of messages waiting in the'
                                   ' Simple Queue Service to trigger '
-                                  'Autoscale (ie. 5)'),
-                            **self.env_or_req('AS_MIN_SQS_LENGTH'), type=float)
+                                  'Autoscale (ie. 5)'), type=float)
         parser.add_argument('--trigger_mode',
                             help=('Which metric(s) to trigger Autoscale '
                                   '(and, or, cpu, mem, sqs)'),
@@ -452,14 +450,12 @@ class Autoscaler():
                             help=('Time in seconds to wait between '
                                   'checks (ie. 20)'),
                             **self.env_or_req('AS_INTERVAL'), type=int)
-        parser.add_argument('--sqs_name',
+        parser.add_argument('--sqs_name', action="store", default='',
                             help=('Name of the AWS Simple Queue Service'
-                                  ' (SQS)'),
-                            **self.env_or_req('AS_SQS_NAME'))
-        parser.add_argument('--region',
+                                  ' (SQS)'))
+        parser.add_argument('--region', action="store", default='us-east-1',
                             help=('Name of AWS Service Region where '
-                                  'the Simple Queue Service is hosted'),
-                            **self.env_or_req('AS_REGION'))
+                                  'the Simple Queue Service is hosted'))
         parser.add_argument('-v', '--verbose', action="store_true",
                             help='Display DEBUG messages')
 
@@ -581,9 +577,13 @@ class Autoscaler():
         try:
             queue = sqs.get_queue_by_name(QueueName=queue_name)
         except ClientError as e:
-            if e.__class__.__name__ == "QueueDoesNotExist":
-                self.log.error("Queue %s does not exist", queue_name)
-            return -1.0
+            if e.response["Error"]["Code"] == "AWS.SimpleQueueService.NonExistentQueue":
+                self.log.error("The specified queue %s does not exist", queue_name)
+            elif e.response["Error"]["Code"] == "InvalidClientTokenId":
+                self.log.error("The security token included in the request is invalid")
+            else:
+                self.log.error(e.response)
+            sys.exit(1)
 
         # Gets the approximate number of visible messages in the queue
         num_of_messages = queue.attributes.get('ApproximateNumberOfMessages')
@@ -669,7 +669,7 @@ class Autoscaler():
 
             # Determine if SQS name is present and trigger mode is SQS
             num_of_messages = 0.0
-            if self.sqs_name is not None and self.trigger_mode == 'sqs':
+            if self.trigger_mode == 'sqs' and len(self.sqs_name) > 0:
                 num_of_messages = float(self.get_sqs_length(self.sqs_name, self.region))
                 self.log.info("Current available messages for queue %s = %s",
                               self.sqs_name, num_of_messages)
