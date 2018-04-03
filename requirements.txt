@@ -2,3 +2,4 @@ requests
 PyJWT
 cryptography
 boto3
+botocore
