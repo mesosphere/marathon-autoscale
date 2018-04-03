@@ -1,0 +1,60 @@
+{
+  "id": "/autoscaler",
+  "instances": 1,
+  "cpus": 1,
+  "mem": 128,
+  "disk": 0,
+  "gpus": 0,
+  "constraints": [],
+  "fetch": [],
+  "storeUrls": [],
+  "backoffSeconds": 1,
+  "backoffFactor": 1.15,
+  "maxLaunchDelaySeconds": 3600,
+  "container": {
+    "type": "DOCKER",
+    "volumes": [],
+    "docker": {
+      "image": "adamiezzi/autoscaler",
+      "portMappings": [],
+      "privileged": false,
+      "parameters": [],
+      "forcePullImage": true
+    }
+  },
+  "healthChecks": [],
+  "readinessChecks": [],
+  "dependencies": [],
+  "upgradeStrategy": {
+    "minimumHealthCapacity": 1,
+    "maximumOverCapacity": 1
+  },
+  "unreachableStrategy": {
+    "inactiveAfterSeconds": 300,
+    "expungeAfterSeconds": 600
+  },
+  "killSelection": "YOUNGEST_FIRST",
+  "portDefinitions": [],
+  "requirePorts": false,
+  "env": {
+    "AS_TRIGGER_MODE": "sqs",
+    "AS_MIN_INSTANCES": "2",
+    "AS_COOL_DOWN_FACTOR": "4",
+    "AS_MAX_INSTANCES": "6",
+    "AS_DCOS_MASTER": "CHANGEME",
+    "AS_MAX_CPU_TIME": "80",
+    "AS_MIN_CPU_TIME": "55",
+    "AS_MAX_MEM_PERCENT": "80",
+    "AS_MIN_MEM_PERCENT": "45",
+    "AS_AUTOSCALE_MULTIPLIER": "1.5",
+    "AS_TRIGGER_NUMBER": "3",
+    "AS_MARATHON_APP": "hello-dcos-cli",
+    "AS_INTERVAL": "10",
+    "AS_SQS_NAME": "testQueue",
+    "AS_REGION": "us-east-1",
+    "AS_MIN_SQS_LENGTH": "3",
+    "AS_MAX_SQS_LENGTH": "10",
+    "AWS_ACCESS_KEY_ID": "CHANGEME",
+    "AWS_SECRET_ACCESS_KEY": "CHANGEME"
+  }
+}

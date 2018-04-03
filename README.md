@@ -38,7 +38,7 @@ Where the marathon.json has been built from one of the samples:
 Input paramters user will be prompted for:
 
     AS_MARATHON_APP: # app to autoscale
-    AS_TRIGGER_MODE: and | or | cpu | mem #which scaling mode you want
+    AS_TRIGGER_MODE: and | or | cpu | mem | sqs #which scaling mode you want
     AS_MIN_INSTANCES: #min number of instances, don’t make less than 2
     AS_MAX_INSTANCES: #max number of instances, must be greater than AS_MIN_INSTANCES
     AS_DCOS_MASTER: #don’t change unless running marathon-on-marathon
@@ -49,6 +49,11 @@ Input paramters user will be prompted for:
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
     AS_TRIGGER_NUMBER # how many times should we pole before scaling up
     AS_INTERVAL #how often should we poll in seconds
+    AS_MIN_SQS_LENGTH #min number of available messages in the queue
+    AS_MAX_SQS_LENGTH #max number of available messages in the queue
+    AS_REGION #aws service region where queue is hosted
+    AS_SQS_NAME #name of the aws simple queue service
+
 
 **Notes** 
 
@@ -80,5 +85,6 @@ In this mode, the system will scale the service up or down when the CPU has been
 
 In this mode, the system will scale the service up or down when the Memory has been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).
 
+#### SQS
 
-
+In this mode, the system will scale the service up or down when the Queue available message length has been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).
