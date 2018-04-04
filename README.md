@@ -51,8 +51,6 @@ Input paramters user will be prompted for:
     AS_INTERVAL #how often should we poll in seconds
     AS_MIN_SQS_LENGTH #min number of available messages in the queue
     AS_MAX_SQS_LENGTH #max number of available messages in the queue
-    AS_REGION #aws service region where queue is hosted
-    AS_SQS_NAME #name of the aws simple queue service
 
 
 **Notes** 
@@ -66,6 +64,12 @@ If you are using an authentication:
     --and either--
     AS_PASSWORD: secret0 #password of the userid above ideally from the secret store
     AS_SECRET: secret0 #private key of the userid above ideally from the secret store
+
+If you are using SQS as your scaling mode:
+
+    AS_REGION #aws service region where queue is hosted
+    AS_SQS_NAME #name of the aws simple queue service
+    AS_SQS_ENDPOINT #endpoint url of the sqs service
 
 ## Scaling Modes
 
