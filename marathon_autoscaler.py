@@ -378,7 +378,7 @@ class Autoscaler():
         else:
             apps = []
             for i in response['apps']:
-                appid = i['id'].strip('/')
+                appid = i['id']
                 apps.append(appid)
             self.log.debug("Found the following marathon apps %s", apps)
             return apps
@@ -567,15 +567,21 @@ class Autoscaler():
         """Get the approximate number of visible messages in a SQS queue
         """
 
-        if (('AS_REGION' in os.environ.keys())
-                and ('AS_SQS_NAME' in os.environ.keys())
-                and ('AS_SQS_ENDPOINT' in os.environ.keys())):
-            region = os.environ.get('AS_REGION')
-            endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
-            queue_name = os.environ.get('AS_SQS_NAME')
-        else:
-            self.log.error("SQS environment vars are not set.")
+        if 'AS_REGION' not in os.environ.keys():
+            self.log.error("AS_REGION env var is not set.")
             sys.exit(1)
+
+        if 'AS_SQS_NAME' not in os.environ.keys():
+            self.log.error("AS_SQS_NAME env var is not set.")
+            sys.exit(1)
+
+        if 'AS_SQS_ENDPOINT' not in os.environ.keys():
+            self.log.error("AS_SQS_ENDPOINT env var is not set.")
+            sys.exit(1)
+
+        region = os.environ.get('AS_REGION')
+        endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
+        queue_name = os.environ.get('AS_SQS_NAME')
 
         sqs = boto3.resource('sqs',
                              endpoint_url=endpoint_url,
@@ -583,6 +589,8 @@ class Autoscaler():
 
         try:
             queue = sqs.get_queue_by_name(QueueName=queue_name)
+            # Gets the approximate number of visible messages in the queue
+            num_of_messages = queue.attributes.get('ApproximateNumberOfMessages')
         except ClientError as e:
             if e.response["Error"]["Code"] == "AWS.SimpleQueueService.NonExistentQueue":
                 self.log.error("The specified queue %s does not exist", queue_name)
@@ -591,9 +599,6 @@ class Autoscaler():
             else:
                 self.log.error(e.response)
             return -1.0
-
-        # Gets the approximate number of visible messages in the queue
-        num_of_messages = queue.attributes.get('ApproximateNumberOfMessages')
 
         if num_of_messages is None:
             num_of_messages = -1.0
