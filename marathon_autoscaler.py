@@ -12,7 +12,7 @@ import time
 import jwt
 import requests
 import boto3
-from botocore.errorfactory import ClientError
+import botocore
 
 # Disable InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # pylint: disable=F0401
@@ -567,44 +567,35 @@ class Autoscaler():
         """Get the approximate number of visible messages in a SQS queue
         """
 
-        if 'AS_REGION' not in os.environ.keys():
-            self.log.error("AS_REGION env var is not set.")
-            sys.exit(1)
+        num_of_messages = 0.0
 
-        if 'AS_SQS_NAME' not in os.environ.keys():
-            self.log.error("AS_SQS_NAME env var is not set.")
-            sys.exit(1)
+        if self.trigger_mode == 'sqs':
 
-        if 'AS_SQS_ENDPOINT' not in os.environ.keys():
-            self.log.error("AS_SQS_ENDPOINT env var is not set.")
-            sys.exit(1)
+            if 'AS_SQS_NAME' not in os.environ.keys():
+                self.log.error("AS_SQS_NAME env var is not set.")
+                sys.exit(1)
 
-        region = os.environ.get('AS_REGION')
-        endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
-        queue_name = os.environ.get('AS_SQS_NAME')
+            if 'AS_SQS_ENDPOINT' not in os.environ.keys():
+                self.log.error("AS_SQS_ENDPOINT env var is not set.")
+                sys.exit(1)
 
-        sqs = boto3.resource('sqs',
-                             endpoint_url=endpoint_url,
-                             region_name=region)
+            endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
+            queue_name = os.environ.get('AS_SQS_NAME')
 
-        try:
-            queue = sqs.get_queue_by_name(QueueName=queue_name)
-            # Gets the approximate number of visible messages in the queue
-            num_of_messages = queue.attributes.get('ApproximateNumberOfMessages')
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "AWS.SimpleQueueService.NonExistentQueue":
-                self.log.error("The specified queue %s does not exist", queue_name)
-            elif e.response["Error"]["Code"] == "InvalidClientTokenId":
-                self.log.error("The security token included in the request is invalid")
-            else:
-                self.log.error(e.response)
-            return -1.0
+            try:
+                """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
+                   and AWS_DEFAULT_REGION env vars as it's credentials
+                """
+                sqs = boto3.resource('sqs',
+                                     endpoint_url=endpoint_url)
+                queue = sqs.get_queue_by_name(QueueName=queue_name)
+                num_of_messages = float(queue.attributes.get('ApproximateNumberOfMessages'))
+            except botocore.errorfactory.ClientError as e:
+                self.log.error("Boto3 client error: %s", e.response)
+                return -1.0
 
-        if num_of_messages is None:
-            num_of_messages = -1.0
-
-        self.log.info("Current available messages for queue %s = %s",
-                      queue_name, num_of_messages)
+            self.log.info("Current available messages for queue %s = %s",
+                          queue_name, num_of_messages)
 
         return num_of_messages
 
@@ -679,13 +670,11 @@ class Autoscaler():
             self.log.info("Current Average Mem Utilization for app %s = %s",
                           self.marathon_app, app_avg_mem)
 
-            # Determine if SQS name is present and trigger mode is SQS
-            num_of_messages = 0.0
-            if self.trigger_mode == 'sqs':
-                num_of_messages = float(self.get_sqs_length())
-                if num_of_messages == -1.0:
-                    self.timer()
-                    continue
+            # Get the approximate number of visible messages in a SQS queue
+            num_of_messages = self.get_sqs_length()
+            if num_of_messages == -1.0:
+                self.timer()
+                continue
 
             #Evaluate whether an autoscale trigger is called for
             self.autoscale(app_avg_cpu, app_avg_mem, num_of_messages)

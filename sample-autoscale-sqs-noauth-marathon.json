@@ -48,12 +48,13 @@
     "AS_MIN_MEM_PERCENT": "45",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
     "AS_TRIGGER_NUMBER": "3",
-    "AS_MARATHON_APP": "hello-dcos-cli",
+    "AS_MARATHON_APP": "/hello-dcos",
     "AS_INTERVAL": "10",
     "AS_SQS_NAME": "testQueue",
-    "AS_REGION": "us-east-1",
+    "AS_SQS_ENDPOINT": "https://sqs.us-east-1.amazonaws.com",
     "AS_MIN_SQS_LENGTH": "3",
     "AS_MAX_SQS_LENGTH": "10",
+    "AWS_DEFAULT_REGION": "us-east-1",
     "AWS_ACCESS_KEY_ID": "CHANGEME",
     "AWS_SECRET_ACCESS_KEY": "CHANGEME"
   }

@@ -37,7 +37,7 @@ Where the marathon.json has been built from one of the samples:
 
 Input paramters user will be prompted for:
 
-    AS_MARATHON_APP: # app to autoscale
+    AS_MARATHON_APP: # app to autoscale.
     AS_TRIGGER_MODE: and | or | cpu | mem | sqs #which scaling mode you want
     AS_MIN_INSTANCES: #min number of instances, don’t make less than 2
     AS_MAX_INSTANCES: #max number of instances, must be greater than AS_MIN_INSTANCES
@@ -55,6 +55,8 @@ Input paramters user will be prompted for:
 
 **Notes** 
 
+Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
+
 For MIN_CPU_TIME and MAX_CPU_TIME on multicore containers, the calculation for determining the value is # of CPU * desired CPU utilization percentage = CPU time (e.g. 80 cpu time * 2 cpu = 160 cpu time)
 For MIN_MEM_PERCENT and MAX_MEM_PERCENT on very small containers, remember that Mesos adds 32MB to the container spec for container overhead (namespace and cgroup), so your target percentages should take that into account.  Alternatively, consider using the CPU only scaling mode for containers with very small memory footprints.
 
@@ -67,9 +69,11 @@ If you are using an authentication:
 
 If you are using SQS as your scaling mode:
 
-    AS_REGION #aws service region where queue is hosted
     AS_SQS_NAME #name of the aws simple queue service
     AS_SQS_ENDPOINT #endpoint url of the sqs service
+    AWS_ACCESS_KEY_ID #aws access key
+    AWS_SECRET_ACCESS_KEY #aws secret key
+    AWS_DEFAULT_REGION #aws region
 
 ## Scaling Modes
 
