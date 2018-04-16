@@ -35,7 +35,7 @@ Where the marathon.json has been built from one of the samples:
     sample-autoscale-username-marathon.json #security permissive or strict on Enterprise DC/OS, using username and password (password stored as a secret)
     sample-autoscale-svcacct-marathon.json #security permissive or strict on Enterprise DC/OS, using service account and private key (private key stored as a secret)
 
-Input paramters user will be prompted for:
+Input parameters user will be prompted for:
 
     AS_MARATHON_APP: # app to autoscale.
     AS_TRIGGER_MODE: and | or | cpu | mem | sqs #which scaling mode you want
@@ -66,6 +66,8 @@ If you are using an authentication:
     --and either--
     AS_PASSWORD: secret0 #password of the userid above ideally from the secret store
     AS_SECRET: secret0 #private key of the userid above ideally from the secret store
+
+For the Amazon Web Services (AWS) Simple Queue Service (SQS) scaling mode, the queue length will be determined by the approximate number of visible messages attribute. The ApproximateNumberOfMessages attribute returns the approximate number of visible messages in a queue. 
 
 If you are using SQS as your scaling mode:
 
