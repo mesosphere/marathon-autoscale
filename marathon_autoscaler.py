@@ -66,7 +66,7 @@ class Autoscaler():
         Returns:
             Sets dcos_headers to be used for authentication
         """
-        # Get the certificate authority
+        # Get the cert authority
         if not os.path.isfile('dcos-ca.crt'):
             response = requests.get(self.dcos_master + '/ca/dcos-ca.crt', verify=False)
             with open("dcos-ca.crt", "wb") as crt_file:
@@ -317,7 +317,7 @@ class Autoscaler():
     def scale_app(self, is_up):
         """Scale marathon_app up or down
         Args:
-            is_ip(bool): Scale up if True, scale down if False
+            is_up(bool): Scale up if True, scale down if False
         """
         if is_up:
             target_instances = math.ceil(self.app_instances * self.autoscale_multiplier)
@@ -325,7 +325,7 @@ class Autoscaler():
                 self.log.info("Reached the set maximum of instances %s", self.max_instances)
                 target_instances = self.max_instances
         else:
-            target_instances = math.ceil(self.app_instances / self.autoscale_multiplier)
+            target_instances = math.floor(self.app_instances / self.autoscale_multiplier)
             if target_instances < self.min_instances:
                 self.log.info("Reached the set minimum of instances %s", self.min_instances)
                 target_instances = self.min_instances
