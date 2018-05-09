@@ -349,6 +349,7 @@ class Autoscaler():
         """
         response = self.dcos_rest("get", '/service/marathon/v2/apps/' +
                                   self.marathon_app)
+
         if response['app']['tasks'] == []:
             self.log.error('No task data in marathon for app %s', self.marathon_app)
         else:
@@ -631,7 +632,7 @@ class Autoscaler():
         while running == 1:
             marathon_apps = self.get_all_apps()
             self.log.debug("The following apps exist in marathon %s", marathon_apps)
-            # Quick sanity check to test for apps existence in MArathon.
+            # Quick sanity check to test for apps existence in Marathon.
             if not self.marathon_app in marathon_apps:
                 self.log.error("Could not find %s", self.marathon_app)
                 self.timer()
@@ -639,6 +640,12 @@ class Autoscaler():
 
             # Get a dictionary of app taskId and hostId for the marathon app
             app_task_dict = self.get_app_details()
+
+            # Quick sanity check to verify if app has any Marathon task data.
+            if not app_task_dict:
+                self.timer()
+                continue
+
             self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
 
             app_cpu_values = []
