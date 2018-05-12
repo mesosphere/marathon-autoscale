@@ -36,6 +36,8 @@ class Autoscaler():
     interval.
     """
     ERR_THRESHOLD = 10 # Maximum number of attempts to decode a response
+    LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
     def __init__(self):
         """Initialize the object with data from the command line or environment
         variables. Log in into DCOS if username / password are provided.
@@ -47,6 +49,7 @@ class Autoscaler():
         self.dcos_headers = {}
 
         self.parse_arguments()
+
         # Start logging
         if self.verbose:
             level = logging.DEBUG
@@ -55,8 +58,18 @@ class Autoscaler():
 
         logging.basicConfig(
             level=level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            format=self.LOGGING_FORMAT
+        )
+
+        # Override the boto logging level to something less chatty
+        boto3.set_stream_logger(
+            name='botocore',
+            level=logging.ERROR,
+            format_string=self.LOGGING_FORMAT
+        )
+
         self.log = logging.getLogger("marathon-autoscaler")
+
         # Set auth header
         self.authenticate()
 
@@ -112,33 +125,41 @@ class Autoscaler():
         done = False
         while not done:
 
-            if data is None:
-                response = requests.request(method, self.dcos_master + path,
-                                            headers=self.dcos_headers,
-                                            verify=False)
-            else:
-                response = requests.request(method, self.dcos_master + path,
-                                            headers=self.dcos_headers,
-                                            data=data,
-                                            verify=False)
-
-            self.log.debug("%s %s %s", method, path, response.status_code)
-            done = True
-            if response.status_code != 200:
-                if response.status_code == 401:
-                    self.log.info("Authenticating")
-                    self.authenticate()
-                    done = False
-                else:
-                    response.raise_for_status()
-
-            content = response.content.strip()
-            if not content:
-                content = "{}"
-
             try:
+
+                if data is None:
+                    response = requests.request(method, self.dcos_master + path,
+                                                headers=self.dcos_headers,
+                                                verify=False)
+                else:
+                    response = requests.request(method, self.dcos_master + path,
+                                                headers=self.dcos_headers,
+                                                data=data,
+                                                verify=False)
+
+                self.log.debug("%s %s %s", method, path, response.status_code)
+                done = True
+
+                if response.status_code != 200:
+                    if response.status_code == 401:
+                        self.log.info("Authenticating")
+                        self.authenticate()
+                        done = False
+                        continue
+                    else:
+                        response.raise_for_status()
+
+                content = response.content.strip()
+                if not content:
+                    content = "{}"
+
                 result = json.loads(content)
                 return result
+
+            except requests.exceptions.HTTPError as http_err:
+                done = False
+                self.log.error("HTTP Error: %s", http_err)
+                self.timer()
             except json.JSONDecodeError as dec_err:
                 done = False
                 err_num += 1
@@ -583,6 +604,8 @@ class Autoscaler():
             endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
             queue_name = os.environ.get('AS_SQS_NAME')
 
+            self.log.debug("SQS queue name:  %s", queue_name)
+
             try:
                 """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
                    and AWS_DEFAULT_REGION env vars as it's credentials
@@ -599,7 +622,6 @@ class Autoscaler():
                           queue_name, num_of_messages)
 
         return num_of_messages
-
 
     def timer(self):
         """Simple timer function

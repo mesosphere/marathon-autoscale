@@ -37,11 +37,12 @@ Where the marathon.json has been built from one of the samples:
 
 Input parameters user will be prompted for:
 
-    AS_MARATHON_APP: # app to autoscale.
-    AS_TRIGGER_MODE: and | or | cpu | mem | sqs #which scaling mode you want
-    AS_MIN_INSTANCES: #min number of instances, don’t make less than 2
-    AS_MAX_INSTANCES: #max number of instances, must be greater than AS_MIN_INSTANCES
-    AS_DCOS_MASTER: #don’t change unless running marathon-on-marathon
+    AS_MARATHON_APP # app to autoscale.
+    AS_TRIGGER_MODE and | or | cpu | mem | sqs #which scaling mode you want
+    AS_AUTOSCALE_MULTIPLIER #multiplier for triggered scale up or down
+    AS_MIN_INSTANCES #min number of instances, don’t make less than 2
+    AS_MAX_INSTANCES #max number of instances, must be greater than AS_MIN_INSTANCES
+    AS_DCOS_MASTER #don’t change unless running marathon-on-marathon
     AS_MAX_CPU_TIME #max average cpu time as float, e.g. 80 or 80.5
     AS_MIN_CPU_TIME #min average cpu time as float, e.g. 55 or 55.5
     AS_MAX_MEM_PERCENT #max avg mem utilization percent as float, e.g. 75 or 75.0
