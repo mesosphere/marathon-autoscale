@@ -11,6 +11,8 @@ import time
 
 import jwt
 import requests
+import boto3
+import botocore
 
 # Disable InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # pylint: disable=F0401
@@ -34,6 +36,8 @@ class Autoscaler():
     interval.
     """
     ERR_THRESHOLD = 10 # Maximum number of attempts to decode a response
+    LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
     def __init__(self):
         """Initialize the object with data from the command line or environment
         variables. Log in into DCOS if username / password are provided.
@@ -45,6 +49,7 @@ class Autoscaler():
         self.dcos_headers = {}
 
         self.parse_arguments()
+
         # Start logging
         if self.verbose:
             level = logging.DEBUG
@@ -53,8 +58,18 @@ class Autoscaler():
 
         logging.basicConfig(
             level=level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            format=self.LOGGING_FORMAT
+        )
+
+        # Override the boto logging level to something less chatty
+        boto3.set_stream_logger(
+            name='botocore',
+            level=logging.ERROR,
+            format_string=self.LOGGING_FORMAT
+        )
+
         self.log = logging.getLogger("marathon-autoscaler")
+
         # Set auth header
         self.authenticate()
 
@@ -64,7 +79,7 @@ class Autoscaler():
         Returns:
             Sets dcos_headers to be used for authentication
         """
-        # Get the certificate authority
+        # Get the cert authority
         if not os.path.isfile('dcos-ca.crt'):
             response = requests.get(self.dcos_master + '/ca/dcos-ca.crt', verify=False)
             with open("dcos-ca.crt", "wb") as crt_file:
@@ -110,33 +125,41 @@ class Autoscaler():
         done = False
         while not done:
 
-            if data is None:
-                response = requests.request(method, self.dcos_master + path,
-                                            headers=self.dcos_headers,
-                                            verify=False)
-            else:
-                response = requests.request(method, self.dcos_master + path,
-                                            headers=self.dcos_headers,
-                                            data=data,
-                                            verify=False)
-
-            self.log.debug("%s %s %s", method, path, response.status_code)
-            done = True
-            if response.status_code != 200:
-                if response.status_code == 401:
-                    self.log.info("Authenticating")
-                    self.authenticate()
-                    done = False
-                else:
-                    response.raise_for_status()
-
-            content = response.content.strip()
-            if not content:
-                content = "{}"
-
             try:
+
+                if data is None:
+                    response = requests.request(method, self.dcos_master + path,
+                                                headers=self.dcos_headers,
+                                                verify=False)
+                else:
+                    response = requests.request(method, self.dcos_master + path,
+                                                headers=self.dcos_headers,
+                                                data=data,
+                                                verify=False)
+
+                self.log.debug("%s %s %s", method, path, response.status_code)
+                done = True
+
+                if response.status_code != 200:
+                    if response.status_code == 401:
+                        self.log.info("Authenticating")
+                        self.authenticate()
+                        done = False
+                        continue
+                    else:
+                        response.raise_for_status()
+
+                content = response.content.strip()
+                if not content:
+                    content = "{}"
+
                 result = json.loads(content)
                 return result
+
+            except requests.exceptions.HTTPError as http_err:
+                done = False
+                self.log.error("HTTP Error: %s", http_err)
+                self.timer()
             except json.JSONDecodeError as dec_err:
                 done = False
                 err_num += 1
@@ -150,12 +173,13 @@ class Autoscaler():
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    def autoscale(self, app_avg_cpu, app_avg_mem):
-        """Check the marathon_app's average cpu and or memeory usage and make decision
+    def autoscale(self, app_avg_cpu, app_avg_mem, num_of_messages):
+        """Check the marathon_app's average cpu and or memory usage and make decision
         about scaling up or down
         Args:
             app_avg_cpu(float): The average cpu utilization across all tasks for marathon_app
             app_avg_mem(float): The average memory utilization across all tasks for marathon_app
+            num_of_messages: The approximate number of visible messages in the sqs queue
         """
         if self.trigger_mode == "and":
             if ((self.min_cpu_time <= app_avg_cpu <= self.max_cpu_time)
@@ -278,12 +302,43 @@ class Autoscaler():
                               self.cool_down, self.cool_down_factor)
             else:
                 self.log.info("Mem usage not exceeding threshold")
+        elif self.trigger_mode == "sqs":
+            if self.min_sqs_length <= num_of_messages <= self.max_sqs_length:
+                self.log.info("Queue length within thresholds")
+                self.trigger_var = 0
+                self.cool_down = 0
+            elif ((num_of_messages > self.max_sqs_length) and
+                  (self.trigger_var >= self.trigger_number)):
+                self.log.info("Autoscale triggered based on queue exceeding threshold")
+                self.scale_app(True)
+                self.trigger_var = 0
+            elif ((num_of_messages < self.max_sqs_length) and
+                  (self.cool_down >= self.cool_down_factor)):
+                self.log.info("Autoscale triggered based on queue below the threshold")
+                self.scale_app(False)
+                self.cool_down = 0
+            elif num_of_messages > self.max_sqs_length:
+                self.trigger_var += 1
+                self.cool_down = 0
+                self.log.info(("Queue length exceeded but waiting for "
+                               "trigger_number to be exceeded too to scale "
+                               "up %s of %s"),
+                              self.trigger_var, self.trigger_number)
+            elif num_of_messages < self.max_sqs_length:
+                self.cool_down += 1
+                self.trigger_var = 0
+                self.log.info(("Queue length are not exceeded but waiting for "
+                               "cool_down to be exceeded too to scale down"
+                               " %s of %s"),
+                              self.cool_down, self.cool_down_factor)
+            else:
+                self.log.info("Queue length not exceeding threshold")
 
 
     def scale_app(self, is_up):
         """Scale marathon_app up or down
         Args:
-            is_ip(bool): Scale up if True, scale down if False
+            is_up(bool): Scale up if True, scale down if False
         """
         if is_up:
             target_instances = math.ceil(self.app_instances * self.autoscale_multiplier)
@@ -291,7 +346,7 @@ class Autoscaler():
                 self.log.info("Reached the set maximum of instances %s", self.max_instances)
                 target_instances = self.max_instances
         else:
-            target_instances = math.ceil(self.app_instances / self.autoscale_multiplier)
+            target_instances = math.floor(self.app_instances / self.autoscale_multiplier)
             if target_instances < self.min_instances:
                 self.log.info("Reached the set minimum of instances %s", self.min_instances)
                 target_instances = self.min_instances
@@ -315,6 +370,7 @@ class Autoscaler():
         """
         response = self.dcos_rest("get", '/service/marathon/v2/apps/' +
                                   self.marathon_app)
+
         if response['app']['tasks'] == []:
             self.log.error('No task data in marathon for app %s', self.marathon_app)
         else:
@@ -344,7 +400,7 @@ class Autoscaler():
         else:
             apps = []
             for i in response['apps']:
-                appid = i['id'].strip('/')
+                appid = i['id']
                 apps.append(appid)
             self.log.debug("Found the following marathon apps %s", apps)
             return apps
@@ -369,6 +425,11 @@ class Autoscaler():
                                   ' all Application Instances to trigger '
                                   'Autoscale (ie. 80)'),
                             **self.env_or_req('AS_MAX_CPU_TIME'), type=float)
+        parser.add_argument('--max_sqs_length',
+                            help=('The max number of messages waiting in the'
+                                  ' Simple Queue Service to trigger '
+                                  'Autoscale (ie. 20)'),
+                            **self.env_or_req('AS_MAX_SQS_LENGTH'), type=float)
         parser.add_argument('--min_mem_percent',
                             help=('The min percent of Mem Usage averaged across'
                                   ' all Application Instances to trigger '
@@ -379,9 +440,14 @@ class Autoscaler():
                                   ' all Application Instances to trigger '
                                   'Autoscale (ie. 50)'),
                             **self.env_or_req('AS_MIN_CPU_TIME'), type=float)
+        parser.add_argument('--min_sqs_length',
+                            help=('The min number of messages waiting in the'
+                                  ' Simple Queue Service to trigger '
+                                  'Autoscale (ie. 5)'),
+                            **self.env_or_req('AS_MIN_SQS_LENGTH'), type=float)
         parser.add_argument('--trigger_mode',
                             help=('Which metric(s) to trigger Autoscale '
-                                  '(and, or, cpu, mem)'),
+                                  '(and, or, cpu, mem, sqs)'),
                             **self.env_or_req('AS_TRIGGER_MODE'))
         parser.add_argument('--autoscale_multiplier',
                             help=('Autoscale multiplier for triggered '
@@ -410,6 +476,7 @@ class Autoscaler():
                             **self.env_or_req('AS_INTERVAL'), type=int)
         parser.add_argument('-v', '--verbose', action="store_true",
                             help='Display DEBUG messages')
+
         try:
             args = parser.parse_args()
         except argparse.ArgumentError as arg_err:
@@ -431,7 +498,8 @@ class Autoscaler():
         self.trigger_number = float(args.trigger_number)
         self.interval = args.interval
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
-
+        self.min_sqs_length = float(args.min_sqs_length)
+        self.max_sqs_length = float(args.max_sqs_length)
 
 
     def get_task_agent_stats(self, task, agent):
@@ -517,6 +585,44 @@ class Autoscaler():
                        task, mem_rss_bytes, mem_utilization, mem_limit_bytes)
         return mem_utilization
 
+    def get_sqs_length(self):
+        """Get the approximate number of visible messages in a SQS queue
+        """
+
+        num_of_messages = 0.0
+
+        if self.trigger_mode == 'sqs':
+
+            if 'AS_SQS_NAME' not in os.environ.keys():
+                self.log.error("AS_SQS_NAME env var is not set.")
+                sys.exit(1)
+
+            if 'AS_SQS_ENDPOINT' not in os.environ.keys():
+                self.log.error("AS_SQS_ENDPOINT env var is not set.")
+                sys.exit(1)
+
+            endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
+            queue_name = os.environ.get('AS_SQS_NAME')
+
+            self.log.debug("SQS queue name:  %s", queue_name)
+
+            try:
+                """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
+                   and AWS_DEFAULT_REGION env vars as it's credentials
+                """
+                sqs = boto3.resource('sqs',
+                                     endpoint_url=endpoint_url)
+                queue = sqs.get_queue_by_name(QueueName=queue_name)
+                num_of_messages = float(queue.attributes.get('ApproximateNumberOfMessages'))
+            except botocore.errorfactory.ClientError as e:
+                self.log.error("Boto3 client error: %s", e.response)
+                return -1.0
+
+            self.log.info("Current available messages for queue %s = %s",
+                          queue_name, num_of_messages)
+
+        return num_of_messages
+
     def timer(self):
         """Simple timer function
         """
@@ -548,7 +654,7 @@ class Autoscaler():
         while running == 1:
             marathon_apps = self.get_all_apps()
             self.log.debug("The following apps exist in marathon %s", marathon_apps)
-            # Quick sanity check to test for apps existence in MArathon.
+            # Quick sanity check to test for apps existence in Marathon.
             if not self.marathon_app in marathon_apps:
                 self.log.error("Could not find %s", self.marathon_app)
                 self.timer()
@@ -556,6 +662,12 @@ class Autoscaler():
 
             # Get a dictionary of app taskId and hostId for the marathon app
             app_task_dict = self.get_app_details()
+
+            # Quick sanity check to verify if app has any Marathon task data.
+            if not app_task_dict:
+                self.timer()
+                continue
+
             self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
 
             app_cpu_values = []
@@ -582,12 +694,19 @@ class Autoscaler():
             app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
             self.log.info("Current average CPU time for app %s = %s",
                           self.marathon_app, app_avg_cpu)
+
             app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
             self.log.info("Current Average Mem Utilization for app %s = %s",
                           self.marathon_app, app_avg_mem)
 
+            # Get the approximate number of visible messages in a SQS queue
+            num_of_messages = self.get_sqs_length()
+            if num_of_messages == -1.0:
+                self.timer()
+                continue
+
             #Evaluate whether an autoscale trigger is called for
-            self.autoscale(app_avg_cpu, app_avg_mem)
+            self.autoscale(app_avg_cpu, app_avg_mem, num_of_messages)
             self.timer()
 
 if __name__ == "__main__":
