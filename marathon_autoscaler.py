@@ -173,7 +173,7 @@ class Autoscaler():
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    def autoscale(self, app_avg_cpu, app_avg_mem, num_of_messages):
+    def autoscale(self, app_avg_cpu, app_avg_mem):
         """Check the marathon_app's average cpu and or memory usage and make decision
         about scaling up or down
         Args:
@@ -302,37 +302,38 @@ class Autoscaler():
                               self.cool_down, self.cool_down_factor)
             else:
                 self.log.info("Mem usage not exceeding threshold")
-        elif self.trigger_mode == "sqs":
-            if self.min_sqs_length <= num_of_messages <= self.max_sqs_length:
-                self.log.info("Queue length within thresholds")
-                self.trigger_var = 0
-                self.cool_down = 0
-            elif ((num_of_messages > self.max_sqs_length) and
-                  (self.trigger_var >= self.trigger_number)):
-                self.log.info("Autoscale triggered based on queue exceeding threshold")
-                self.scale_app(True)
-                self.trigger_var = 0
-            elif ((num_of_messages < self.max_sqs_length) and
-                  (self.cool_down >= self.cool_down_factor)):
-                self.log.info("Autoscale triggered based on queue below the threshold")
-                self.scale_app(False)
-                self.cool_down = 0
-            elif num_of_messages > self.max_sqs_length:
-                self.trigger_var += 1
-                self.cool_down = 0
-                self.log.info(("Queue length exceeded but waiting for "
-                               "trigger_number to be exceeded too to scale "
-                               "up %s of %s"),
-                              self.trigger_var, self.trigger_number)
-            elif num_of_messages < self.max_sqs_length:
-                self.cool_down += 1
-                self.trigger_var = 0
-                self.log.info(("Queue length are not exceeded but waiting for "
-                               "cool_down to be exceeded too to scale down"
-                               " %s of %s"),
-                              self.cool_down, self.cool_down_factor)
-            else:
-                self.log.info("Queue length not exceeding threshold")
+
+    def autoscale_sqs(self, num_of_messages):
+        if self.min_sqs_length <= num_of_messages <= self.max_sqs_length:
+            self.log.info("Queue length within thresholds")
+            self.trigger_var = 0
+            self.cool_down = 0
+        elif ((num_of_messages > self.max_sqs_length) and
+                (self.trigger_var >= self.trigger_number)):
+            self.log.info("Autoscale triggered based on queue exceeding threshold")
+            self.scale_app(True)
+            self.trigger_var = 0
+        elif ((num_of_messages < self.max_sqs_length) and
+                (self.cool_down >= self.cool_down_factor)):
+            self.log.info("Autoscale triggered based on queue below the threshold")
+            self.scale_app(False)
+            self.cool_down = 0
+        elif num_of_messages > self.max_sqs_length:
+            self.trigger_var += 1
+            self.cool_down = 0
+            self.log.info(("Queue length exceeded but waiting for "
+                            "trigger_number to be exceeded too to scale "
+                            "up %s of %s"),
+                            self.trigger_var, self.trigger_number)
+        elif num_of_messages < self.max_sqs_length:
+            self.cool_down += 1
+            self.trigger_var = 0
+            self.log.info(("Queue length are not exceeded but waiting for "
+                            "cool_down to be exceeded too to scale down"
+                            " %s of %s"),
+                            self.cool_down, self.cool_down_factor)
+        else:
+            self.log.info("Queue length not exceeding threshold")
 
 
     def scale_app(self, is_up):
@@ -591,35 +592,33 @@ class Autoscaler():
 
         num_of_messages = 0.0
 
-        if self.trigger_mode == 'sqs':
+        if 'AS_SQS_NAME' not in os.environ.keys():
+            self.log.error("AS_SQS_NAME env var is not set.")
+            sys.exit(1)
 
-            if 'AS_SQS_NAME' not in os.environ.keys():
-                self.log.error("AS_SQS_NAME env var is not set.")
-                sys.exit(1)
+        if 'AS_SQS_ENDPOINT' not in os.environ.keys():
+            self.log.error("AS_SQS_ENDPOINT env var is not set.")
+            sys.exit(1)
 
-            if 'AS_SQS_ENDPOINT' not in os.environ.keys():
-                self.log.error("AS_SQS_ENDPOINT env var is not set.")
-                sys.exit(1)
+        endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
+        queue_name = os.environ.get('AS_SQS_NAME')
 
-            endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
-            queue_name = os.environ.get('AS_SQS_NAME')
+        self.log.debug("SQS queue name:  %s", queue_name)
 
-            self.log.debug("SQS queue name:  %s", queue_name)
+        try:
+            """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
+                and AWS_DEFAULT_REGION env vars as it's credentials
+            """
+            sqs = boto3.resource('sqs',
+                                    endpoint_url=endpoint_url)
+            queue = sqs.get_queue_by_name(QueueName=queue_name)
+            num_of_messages = float(queue.attributes.get('ApproximateNumberOfMessages'))
+        except botocore.errorfactory.ClientError as e:
+            self.log.error("Boto3 client error: %s", e.response)
+            return -1.0
 
-            try:
-                """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
-                   and AWS_DEFAULT_REGION env vars as it's credentials
-                """
-                sqs = boto3.resource('sqs',
-                                     endpoint_url=endpoint_url)
-                queue = sqs.get_queue_by_name(QueueName=queue_name)
-                num_of_messages = float(queue.attributes.get('ApproximateNumberOfMessages'))
-            except botocore.errorfactory.ClientError as e:
-                self.log.error("Boto3 client error: %s", e.response)
-                return -1.0
-
-            self.log.info("Current available messages for queue %s = %s",
-                          queue_name, num_of_messages)
+        self.log.info("Current available messages for queue %s = %s",
+                        queue_name, num_of_messages)
 
         return num_of_messages
 
@@ -670,43 +669,50 @@ class Autoscaler():
 
             self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
 
-            app_cpu_values = []
-            app_mem_values = []
-            for task, agent in app_task_dict.items():
-                self.log.info("Inspecting task %s on agent %s",
-                              task, agent)
-                # CPU usage
-                cpu_usage = self.get_cpu_usage(task, agent)
-                if cpu_usage == -1.0:
+            # Right now, autoscale is either based on sqs or cpu/mem; there is no overlap
+            # So if we're in sqs mode, short circuit collection of cpu/mem
+            if self.trigger_mode == "sqs":
+                # Get the approximate number of visible messages in a SQS queue
+                num_of_messages = self.get_sqs_length()
+                if num_of_messages == -1.0:
                     self.timer()
                     continue
+                self.autoscale_sqs(num_of_messages)    
+            
+            # Otherwise, process based on and/or/cpu/mem logic
+            else:
+                app_cpu_values = []
+                app_mem_values = []
+                for task, agent in app_task_dict.items():
+                    self.log.info("Inspecting task %s on agent %s",
+                                task, agent)
+                    # CPU usage
+                    cpu_usage = self.get_cpu_usage(task, agent)
+                    if cpu_usage == -1.0:
+                        self.timer()
+                        continue
 
-                # Memory usage
-                mem_utilization = self.get_mem_usage(task, agent)
-                if mem_utilization == -1.0:
-                    self.timer()
-                    continue
+                    # Memory usage
+                    mem_utilization = self.get_mem_usage(task, agent)
+                    if mem_utilization == -1.0:
+                        self.timer()
+                        continue
 
-                app_cpu_values.append(cpu_usage)
-                app_mem_values.append(mem_utilization)
+                    app_cpu_values.append(cpu_usage)
+                    app_mem_values.append(mem_utilization)
 
-            # Normalized data for all tasks into a single value by averaging
-            app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
-            self.log.info("Current average CPU time for app %s = %s",
-                          self.marathon_app, app_avg_cpu)
+                # Normalized data for all tasks into a single value by averaging
+                app_avg_cpu = (sum(app_cpu_values) / len(app_cpu_values))
+                self.log.info("Current average CPU time for app %s = %s",
+                            self.marathon_app, app_avg_cpu)
 
-            app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
-            self.log.info("Current Average Mem Utilization for app %s = %s",
-                          self.marathon_app, app_avg_mem)
+                app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
+                self.log.info("Current Average Mem Utilization for app %s = %s",
+                            self.marathon_app, app_avg_mem)
+                #Evaluate whether an autoscale trigger is called for
 
-            # Get the approximate number of visible messages in a SQS queue
-            num_of_messages = self.get_sqs_length()
-            if num_of_messages == -1.0:
-                self.timer()
-                continue
+                self.autoscale(app_avg_cpu, app_avg_mem)
 
-            #Evaluate whether an autoscale trigger is called for
-            self.autoscale(app_avg_cpu, app_avg_mem, num_of_messages)
             self.timer()
 
 if __name__ == "__main__":
