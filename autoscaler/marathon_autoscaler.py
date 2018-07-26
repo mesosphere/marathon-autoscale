@@ -9,10 +9,10 @@ import os
 import sys
 import time
 
+import boto3
 import jwt
 import requests
-import boto3
-import botocore
+from botocore.errorfactory import ClientError
 
 # Disable InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning # pylint: disable=F0401
@@ -409,7 +409,7 @@ class Autoscaler():
         """Set up an argument parser
         Override values of command line arguments with environment variables.
         """
-        parser = argparse.ArgumentParser(description='Marathon autoscale app.')
+        parser = argparse.ArgumentParser(description='Marathon autoscaler app.')
         parser.set_defaults()
         parser.add_argument('--dcos-master',
                             help=('The DNS hostname or IP of your Marathon'
@@ -610,11 +610,11 @@ class Autoscaler():
                 """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
                    and AWS_DEFAULT_REGION env vars as it's credentials
                 """
-                sqs = boto3.resource('sqs',
-                                     endpoint_url=endpoint_url)
+                sqs = resource('sqs',
+                               endpoint_url=endpoint_url)
                 queue = sqs.get_queue_by_name(QueueName=queue_name)
                 num_of_messages = float(queue.attributes.get('ApproximateNumberOfMessages'))
-            except botocore.errorfactory.ClientError as e:
+            except ClientError as e:
                 self.log.error("Boto3 client error: %s", e.response)
                 return -1.0
 
@@ -705,7 +705,7 @@ class Autoscaler():
                 self.timer()
                 continue
 
-            #Evaluate whether an autoscale trigger is called for
+            #Evaluate whether an autoscaler trigger is called for
             self.autoscale(app_avg_cpu, app_avg_mem, num_of_messages)
             self.timer()
 
