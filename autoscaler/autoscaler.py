@@ -79,7 +79,7 @@ class Autoscaler():
         # Authenticate using a service account
         elif ('AS_SECRET' in os.environ.keys()) and ('AS_USERID' in os.environ.keys()):
 
-            # Get the private key from the autoscaler secret
+            # Get the private key from the auto-scaler secret
             saas = json.loads(os.environ.get('AS_SECRET'))
 
             # Create a JWT token
@@ -131,6 +131,7 @@ class Autoscaler():
             try:
 
                 if data is None:
+                    # TODO: can we change method to get
                     response = requests.request(
                         method,
                         self.dcos_master + path,
@@ -191,18 +192,17 @@ class Autoscaler():
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
+        app_task_dict = {}
+
         response = self.dcos_rest(
             "get",
             self.MARATHON_APPS_URI + self.marathon_app
         )
 
-        if response['app']['tasks'] == []:
-            self.log.error('No task data in marathon for app %s', self.marathon_app)
-        else:
+        if response['app']['tasks']:
             self.app_instances = response['app']['instances']
             self.log.debug("Marathon app %s has %s deployed instances",
                            self.marathon_app, self.app_instances)
-            app_task_dict = {}
             for i in response['app']['tasks']:
                 taskid = i['id']
                 hostid = i['host']
@@ -214,23 +214,27 @@ class Autoscaler():
                     slave_id
                 )
                 app_task_dict[str(taskid)] = str(slave_id)
+        else:
+            self.log.error('No task data in marathon for app %s', self.marathon_app)
 
-            return app_task_dict
+        return app_task_dict
 
     def get_all_apps(self):
         """Query marathon for a list of its apps
         Returns:
             a list of all marathon apps
         """
+        apps = []
+
         response = self.dcos_rest("get", self.MARATHON_APPS_URI)
 
-        if response['apps'] == []:
-            self.log.error("No Apps found on Marathon")
-            sys.exit(1)
-        else:
-            apps = []
+        if response['apps']:
             for i in response['apps']:
                 appid = i['id']
                 apps.append(appid)
             self.log.debug("Found the following marathon apps %s", apps)
-            return apps
+        else:
+            self.log.error("No Apps found on Marathon")
+            sys.exit(1)
+
+        return apps
