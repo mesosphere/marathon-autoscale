@@ -131,17 +131,13 @@ class Autoscaler():
             try:
 
                 if data is None:
-                    # TODO: can we change method to get
-                    response = requests.request(
-                        method,
+                    response = requests.get(
                         self.dcos_master + path,
                         headers=self.dcos_headers,
                         verify=False
                     )
                 else:
-                    # TODO: can we change method to get
-                    response = requests.request(
-                        method,
+                    response = requests.get(
                         self.dcos_master + path,
                         headers=self.dcos_headers,
                         data=data,
