@@ -3,6 +3,7 @@ import os
 import json
 import sys
 import time
+import math
 
 import requests
 import jwt
@@ -120,6 +121,7 @@ class Autoscaler():
     def dcos_rest(self, method, path, data=None):
         """Common querying procedure that handles 401 errors
         Args:
+            method (str): HTTP method (get or put)
             path (str): URI path after the mesos master address
         Returns:
             JSON requests.response.content result of the query
@@ -131,13 +133,15 @@ class Autoscaler():
             try:
 
                 if data is None:
-                    response = requests.get(
+                    response = requests.request(
+                        method,
                         self.dcos_master + path,
                         headers=self.dcos_headers,
                         verify=False
                     )
                 else:
-                    response = requests.get(
+                    response = requests.request(
+                        method,
                         self.dcos_master + path,
                         headers=self.dcos_headers,
                         data=data,
@@ -234,3 +238,61 @@ class Autoscaler():
             sys.exit(1)
 
         return apps
+
+    # TODO: change some of the terminology
+    def autoscale(self, min, actual, max):
+        if min <= actual <= max:
+            self.log.info("%s within thresholds" % self.trigger_mode)
+            self.trigger_var = 0
+            self.cool_down = 0
+        elif (actual > max) and (self.trigger_var >= self.trigger_number):
+            self.log.info("Auto-scale triggered based on %s exceeding threshold" % self.trigger_mode)
+            self.scale_app(True)
+            self.trigger_var = 0
+        elif (actual < min) and (self.cool_down >= self.cool_down_factor):
+            self.log.info("Auto-scale triggered based on %s below the threshold" % self.trigger_mode)
+            self.scale_app(False)
+            self.cool_down = 0
+        elif actual > max:
+            self.trigger_var += 1
+            self.cool_down = 0
+            self.log.info("%s above thresholds, but waiting for trigger num (%s) "
+                          "to exceed trigger var (%s) in order to scale up." %
+                          (self.trigger_mode, self.trigger_number, self.trigger_var))
+        elif actual < min:
+            self.cool_down += 1
+            self.trigger_var = 0
+            self.log.info(("Queue length are not exceeded but waiting for "
+                           "cool_down to be exceeded too to scale down"
+                           " %s of %s"),
+                          self.cool_down, self.cool_down_factor)
+        else:
+            self.log.info("%s not exceeding threshold" % self.trigger_mode)
+
+    def scale_app(self, is_up):
+        """Scale marathon_app up or down
+        Args:
+            is_up(bool): Scale up if True, scale down if False
+        """
+        if is_up:
+            target_instances = math.ceil(self.app_instances * self.autoscale_multiplier)
+            if target_instances > self.max_instances:
+                self.log.info("Reached the set maximum of instances %s", self.max_instances)
+                target_instances = self.max_instances
+        else:
+            target_instances = math.floor(self.app_instances / self.autoscale_multiplier)
+            if target_instances < self.min_instances:
+                self.log.info("Reached the set minimum of instances %s", self.min_instances)
+                target_instances = self.min_instances
+
+        self.log.debug("scale_app: app_instances %s target_instances %s",
+                       self.app_instances, target_instances)
+        if self.app_instances != target_instances:
+            data = {'instances': target_instances}
+            json_data = json.dumps(data)
+            response = self.dcos_rest(
+                "put",
+                '/service/marathon/v2/apps/' + self.marathon_app,
+                data=json_data
+            )
+            self.log.debug("scale_app response: %s", response)
