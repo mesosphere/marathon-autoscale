@@ -368,8 +368,10 @@ class Autoscaler():
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
-        response = self.dcos_rest("get", '/service/marathon/v2/apps/' +
-                                  self.marathon_app)
+        response = self.dcos_rest(
+            "get",
+            '/service/marathon/v2/apps/' + self.marathon_app
+        )
 
         if response['app']['tasks'] == []:
             self.log.error('No task data in marathon for app %s', self.marathon_app)

@@ -15,5 +15,5 @@ class AbstractMode(ABC):
         pass
 
     @abstractmethod
-    def get_metric(self):
+    def get_metric(self, app_task):
         pass
