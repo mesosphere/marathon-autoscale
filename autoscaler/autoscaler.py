@@ -9,7 +9,7 @@ import argparse
 import requests
 import jwt
 
-from autoscaler.modes import *
+from autoscaler.modes import scalesqs
 
 class Autoscaler():
     """Marathon auto scaler
@@ -24,6 +24,11 @@ class Autoscaler():
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     DCOS_CA = 'dcos-ca.crt'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
+
+    # Dictionary defines the different scaling modes available
+    SCALING_MODES = {
+        'sqs', scalesqs.ScaleBySQS
+    }
 
     def __init__(self):
         """Initialize the object with data from the command line or environment
@@ -404,6 +409,11 @@ class Autoscaler():
 
             self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
 
+            scalemode = self.SCALING_MODES.get(self.trigger_mode, None)
+            if scalemode is None:
+                self.log.error("Scale mode is not found.")
+                sys.exit(1)
+
             # Get the mode dimension and actual metric
             min = scalemode.get_min()
             max = scalemode.get_max()
@@ -416,3 +426,8 @@ class Autoscaler():
             # Evaluate whether to auto-scale
             self.autoscale(min, max, metric)
             self.timer()
+
+
+if __name__ == "__main__":
+    AutoScaler = Autoscaler()
+    AutoScaler.run()
