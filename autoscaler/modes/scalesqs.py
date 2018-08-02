@@ -5,30 +5,45 @@ import logging
 from boto3 import resource
 from botocore.errorfactory import ClientError
 
+from autoscaler.modes.scalemode import AbstractMode
 
-class ScaleBySQS:
+
+class ScaleBySQS(AbstractMode):
 
     def __init__(self):
+
+        super().__init__()
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
         logger.setLevel(logging.ERROR)
 
+        # Verify SQS environment vars are present
+        if 'AS_SQS_NAME' not in os.environ.keys():
+            self.log.error("AS_SQS_NAME env var is not set.")
+            sys.exit(1)
+
+        if 'AS_SQS_ENDPOINT' not in os.environ.keys():
+            self.log.error("AS_SQS_ENDPOINT env var is not set.")
+            sys.exit(1)
+
+        if 'AS_MIN_SQS_LENGTH' not in os.environ.keys():
+            self.log.error("AS_MIN_SQS_LENGTH env var is not set.")
+            sys.exit(1)
+
+        if 'AS_MAX_SQS_LENGTH' not in os.environ.keys():
+            self.log.error("AS_MIN_SQS_LENGTH env var is not set.")
+            sys.exit(1)
+
+        self.min_range = float(os.environ.get('AS_MIN_SQS_LENGTH'))
+        self.max_range = float(os.environ.get('AS_MAX_SQS_LENGTH'))
+
     def get_metric(self):
         """Get the approximate number of visible messages in a SQS queue
         """
-
         metric = 0.0
 
         if self.trigger_mode == 'sqs':
-
-            if 'AS_SQS_NAME' not in os.environ.keys():
-                self.log.error("AS_SQS_NAME env var is not set.")
-                sys.exit(1)
-
-            if 'AS_SQS_ENDPOINT' not in os.environ.keys():
-                self.log.error("AS_SQS_ENDPOINT env var is not set.")
-                sys.exit(1)
 
             endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
             queue_name = os.environ.get('AS_SQS_NAME')
@@ -51,3 +66,9 @@ class ScaleBySQS:
                           queue_name, metric)
 
         return metric
+
+    def get_min(self):
+        return self.min_range
+
+    def get_max(self):
+        return self.max_range
