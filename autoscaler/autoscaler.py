@@ -6,13 +6,10 @@ import time
 import math
 import argparse
 
-import requests
-import jwt
-
 from autoscaler.marathonclient import MarathonClient
 
-from autoscaler.modes import scalesqs
-from autoscaler.modes import scalecpu
+from autoscaler.modes.scalecpu import ScaleCPU
+from autoscaler.modes.scalesqs import ScaleBySQS
 
 class Autoscaler():
     """Marathon auto scaler
@@ -25,13 +22,12 @@ class Autoscaler():
 
     ERR_THRESHOLD = 10 # Maximum number of attempts to decode a response
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    DCOS_CA = 'dcos-ca.crt'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
-    # Dictionary defines the different scaling modes available
-    SCALING_MODES = {
-        'sqs': scalesqs.ScaleBySQS,
-        'cpu': scalecpu.ScaleCPU
+    # Dict defines the different scaling modes available to autoscaler
+    MODES = {
+        'sqs': ScaleBySQS,
+        'cpu': ScaleCPU
     }
 
     def __init__(self):
@@ -53,7 +49,6 @@ class Autoscaler():
 
         self.log = logging.getLogger("marathon-autoscaler")
 
-        self.app_instances = 0
         self.scale_up = 0
         self.cool_down = 0
 
@@ -73,119 +68,125 @@ class Autoscaler():
         # Initialize marathon client for auth requests
         self.marathon_client = MarathonClient(self.dcos_master)
 
-        # Set auth header
-        # TODO: does this make sense
-        self.marathon_client.authenticate()
-
     def timer(self):
         """Simple timer function"""
         self.log.debug("Successfully completed a cycle, sleeping for %s seconds",
                        self.interval)
         time.sleep(self.interval)
 
-    def get_app_details(self):
-        """Retrieve metadata about marathon_app
-        Returns:
-            Dictionary of task_id mapped to mesos slave_id
-        """
-        app_task_dict = {}
+    def get_app_instances(self):
+
+        app_instances = 0
 
         response = self.marathon_client.dcos_rest(
             "get",
             self.MARATHON_APPS_URI + self.marathon_app
         )
 
-        if response['app']['tasks']:
-            self.app_instances = response['app']['instances']
+        try:
+            app_instances = response['app']['instances']
             self.log.debug("Marathon app %s has %s deployed instances",
-                           self.marathon_app, self.app_instances)
-            for i in response['app']['tasks']:
-                taskid = i['id']
-                hostid = i['host']
-                slave_id = i['slaveId']
-                self.log.debug(
-                    "Task %s is running on host %s with slaveId %s",
-                    taskid,
-                    hostid,
-                    slave_id
-                )
-                app_task_dict[str(taskid)] = str(slave_id)
-        else:
+                           self.marathon_app, app_instances)
+        except KeyError:
             self.log.error('No task data in marathon for app %s', self.marathon_app)
 
-        return app_task_dict
+        return app_instances
 
-    def get_all_apps(self):
-        """Query marathon for a list of its apps
-        Returns:
-            a list of all marathon apps
-        """
+    #def get_all_apps(self):
+
+       # apps = []
+
+        #response = self.marathon_client.dcos_rest(
+         #   "get",
+          #  self.MARATHON_APPS_URI
+        #)
+
+        #if response['apps']:
+         #   for i in response['apps']:
+          #      appid = i['id']
+           #     apps.append(appid)
+            #    self.log.debug("The following apps exist in marathon %s", apps)
+        #else:
+         #   self.log.error("No Apps found on Marathon")
+          #  sys.exit(1)
+
+        #return apps
+
+    def app_exists(self):
+
         apps = []
 
+        # Query marathon for a list of its apps
         response = self.marathon_client.dcos_rest(
             "get",
             self.MARATHON_APPS_URI
         )
 
-        if response['apps']:
+        try:
             for i in response['apps']:
                 appid = i['id']
                 apps.append(appid)
-            self.log.debug("Found the following marathon apps %s", apps)
-        else:
-            self.log.error("No Apps found on Marathon")
+            # test for apps existence in Marathon
+            if self.marathon_app in apps:
+                return True
+        except KeyError:
+            self.log.error("No Apps found in Marathon")
             sys.exit(1)
 
-        return apps
+        return False
 
-    def autoscale(self, min, max, metric):
+    def autoscale(self, min, max, value):
 
-        if min <= metric <= max:
+        if min <= value <= max:
             self.log.info("%s within thresholds" % self.trigger_mode)
             self.scale_up = 0
             self.cool_down = 0
-        elif (metric > max) and (self.scale_up >= self.scale_up_factor):
-            self.log.info("Auto-scale triggered based on %s exceeding threshold" % self.trigger_mode)
-            self.scale_app(True)
-            self.scale_up = 0
-        elif (metric < min) and (self.cool_down >= self.cool_down_factor):
-            self.log.info("Auto-scale triggered based on %s below the threshold" % self.trigger_mode)
-            self.scale_app(False)
-            self.cool_down = 0
-        elif metric > max:
+        elif value > max:
             self.scale_up += 1
             self.cool_down = 0
-            self.log.info("%s above thresholds, but waiting for scaling factor (%s) "
-                          "to be exceeded in order to trigger auto scale. " %
-                          (self.trigger_mode, self.scale_up))
-        elif metric < min:
+            if self.scale_up >= self.scale_up_factor:
+                self.log.info("Auto-scale triggered based on %s exceeding threshold" % self.trigger_mode)
+                self.scale_app(True)
+                self.scale_up = 0
+            else:
+                self.log.info("%s above thresholds, but waiting for scaling factor (%s) "
+                              "to be exceeded in order to scale up." %
+                              (self.trigger_mode, self.scale_up))
+        elif value < min:
             self.cool_down += 1
             self.scale_up = 0
-            self.log.info("%s below thresholds, but waiting for cool down factor (%s) "
-                          "to be exceeded in order to trigger auto scale. " %
-                          (self.trigger_mode, self.cool_down))
-        else:
-            self.log.info("%s not exceeding threshold" % self.trigger_mode)
+            if self.cool_down >= self.cool_down_factor:
+                self.log.info("Auto-scale triggered based on %s below the threshold" % self.trigger_mode)
+                self.scale_app(False)
+                self.cool_down = 0
+            else:
+                self.log.info("%s below thresholds, but waiting for cool down factor (%s) "
+                              "to be exceeded in order to trigger auto scale. " %
+                              (self.trigger_mode, self.cool_down))
 
     def scale_app(self, is_up):
         """Scale marathon_app up or down
         Args:
             is_up(bool): Scale up if True, scale down if False
         """
+        # get the number of instances running
+        app_instances = self.get_app_instances()
+
         if is_up:
-            target_instances = math.ceil(self.app_instances * self.autoscale_multiplier)
+            target_instances = math.ceil(app_instances * self.autoscale_multiplier)
             if target_instances > self.max_instances:
                 self.log.info("Reached the set maximum of instances %s", self.max_instances)
                 target_instances = self.max_instances
         else:
-            target_instances = math.floor(self.app_instances / self.autoscale_multiplier)
+            target_instances = math.floor(app_instances / self.autoscale_multiplier)
             if target_instances < self.min_instances:
                 self.log.info("Reached the set minimum of instances %s", self.min_instances)
                 target_instances = self.min_instances
 
         self.log.debug("scale_app: app_instances %s target_instances %s",
-                       self.app_instances, target_instances)
-        if self.app_instances != target_instances:
+                       app_instances, target_instances)
+
+        if app_instances != target_instances:
             data = {'instances': target_instances}
             json_data = json.dumps(data)
             response = self.marathon_client.dcos_rest(
@@ -259,7 +260,7 @@ class Autoscaler():
             result = {'required': True}
         return result
 
-    def run(self, scalemode):
+    def run(self):
         """Main function
         Runs the query - compute - act cycle
         """
@@ -268,42 +269,42 @@ class Autoscaler():
 
         while True:
 
-            # Get all of the marathon apps
-            marathon_apps = self.get_all_apps()
-            self.log.debug("The following apps exist in marathon %s", marathon_apps)
-
             # test for apps existence in Marathon.
-            if self.marathon_app not in marathon_apps:
+            if not self.app_exists():
                 self.log.error("Could not find %s in list of apps.", self.marathon_app)
                 self.timer()
                 continue
 
             # Get a dictionary of app taskId and hostId for the marathon app
-            app_task_dict = self.get_app_details()
+            #app_task_dict = self.get_app_details()
 
             # verify if app has any Marathon task data.
-            if not app_task_dict:
-                self.timer()
-                continue
+            #if not app_task_dict:
+             #   self.timer()
+              #  continue
 
-            self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
+            #self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
 
-            scalemode = self.SCALING_MODES.get(self.trigger_mode, None)
-            if scalemode is None:
+            # get the scaling mode subclass based on parameter
+            mode = self.MODES.get(self.trigger_mode, None)
+            if mode is None:
                 self.log.error("Scale mode is not found.")
                 sys.exit(1)
 
-            # Get the mode dimension and actual metric
-            min = scalemode.get_min()
-            max = scalemode.get_max()
-            metric = scalemode.get_metric()
+            # Instantiate the scaling mode class
+            scaling_mode = mode(self.marathon_client, self.marathon_app)
 
-            if metric == -1.0:
+            # Get the mode dimension and actual metric
+            min = float(scaling_mode.get_min())
+            max = float(scaling_mode.get_max())
+            value = float(scaling_mode.get_value())
+
+            if value == -1.0:
                 self.timer()
                 continue
 
             # Evaluate whether to auto-scale
-            self.autoscale(min, max, metric)
+            self.autoscale(min, max, value)
             self.timer()
 
 

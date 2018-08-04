@@ -12,6 +12,7 @@ class MarathonClient():
     def __init__(self, dcos_master):
         self.dcos_master = dcos_master
         self.dcos_headers = {}
+        self.authenticate()
 
     def authenticate(self):
         """Using a userid/pass or a service account secret,

@@ -10,9 +10,9 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    def __init__(self):
+    def __init__(self, marathon_client, app_name):
 
-        super().__init__()
+        super().__init__(marathon_client, app_name)
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
@@ -38,7 +38,7 @@ class ScaleBySQS(AbstractMode):
         self.min_range = float(os.environ.get('AS_MIN_SQS_LENGTH'))
         self.max_range = float(os.environ.get('AS_MAX_SQS_LENGTH'))
 
-    def get_metric(self):
+    def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
         """
         metric = 0.0
@@ -54,8 +54,10 @@ class ScaleBySQS(AbstractMode):
                 """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
                    and AWS_DEFAULT_REGION env vars as it's credentials
                 """
-                sqs = resource('sqs',
-                               endpoint_url=endpoint_url)
+                sqs = resource(
+                    'sqs',
+                    endpoint_url=endpoint_url
+                )
                 queue = sqs.get_queue_by_name(QueueName=queue_name)
                 metric = float(queue.attributes.get('ApproximateNumberOfMessages'))
             except ClientError as e:
