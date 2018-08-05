@@ -6,10 +6,9 @@ import time
 import math
 import argparse
 
-from autoscaler.marathonclient import MarathonClient
-
-from autoscaler.modes.scalecpu import ScaleCPU
-from autoscaler.modes.scalesqs import ScaleBySQS
+from modes.marathonclient import MarathonClient
+from modes.scalecpu import ScaleCPU
+from modes.scalesqs import ScaleBySQS
 
 class Autoscaler():
     """Marathon auto scaler
@@ -20,7 +19,6 @@ class Autoscaler():
     interval.
     """
 
-    ERR_THRESHOLD = 10 # Maximum number of attempts to decode a response
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
@@ -36,18 +34,7 @@ class Autoscaler():
         Set up logging according to the verbosity requested.
         """
 
-        # Start logging
-        if self.verbose:
-            level = logging.DEBUG
-        else:
-            level = logging.INFO
-
-        logging.basicConfig(
-            level=level,
-            format=self.LOGGING_FORMAT
-        )
-
-        self.log = logging.getLogger("marathon-autoscaler")
+        self.log = logging.getLogger("autoscaler")
 
         self.scale_up = 0
         self.cool_down = 0
@@ -64,6 +51,17 @@ class Autoscaler():
         self.scale_up_factor = float(args.scale_up_factor)
         self.interval = args.interval
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
+
+        # Start logging
+        if self.verbose:
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
+
+        logging.basicConfig(
+            level=level,
+            format=self.LOGGING_FORMAT
+        )
 
         # Initialize marathon client for auth requests
         self.marathon_client = MarathonClient(self.dcos_master)
@@ -124,25 +122,25 @@ class Autoscaler():
         elif value > max:
             self.scale_up += 1
             self.cool_down = 0
-            if self.scale_up >= self.scale_up_factor:
+            if self.scale_up > self.scale_up_factor:
                 self.log.info("Auto-scale triggered based on %s exceeding threshold" % self.trigger_mode)
                 self.scale_app(True)
                 self.scale_up = 0
             else:
-                self.log.info("%s above thresholds, but waiting for scaling factor (%s) "
-                              "to be exceeded in order to scale up." %
-                              (self.trigger_mode, self.scale_up))
+                self.log.info("%s above thresholds, but waiting to exceed scale-up factor. "
+                              "Consecutive cycles = %s, Scale-up factor = %s" %
+                              (self.trigger_mode, self.scale_up, self.scale_up_factor))
         elif value < min:
             self.cool_down += 1
             self.scale_up = 0
-            if self.cool_down >= self.cool_down_factor:
+            if self.cool_down > self.cool_down_factor:
                 self.log.info("Auto-scale triggered based on %s below the threshold" % self.trigger_mode)
                 self.scale_app(False)
                 self.cool_down = 0
             else:
-                self.log.info("%s below thresholds, but waiting for cool down factor (%s) "
-                              "to be exceeded in order to trigger auto scale. " %
-                              (self.trigger_mode, self.cool_down))
+                self.log.info("%s below thresholds, but waiting to exceed cool-down factor. "
+                              "Consecutive cycles = %s, Cool-down factor = %s" %
+                              (self.trigger_mode, self.cool_down, self.cool_down_factor))
 
     def scale_app(self, is_up):
         """Scale marathon_app up or down

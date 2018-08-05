@@ -3,16 +3,19 @@ import requests
 import json
 import jwt
 import sys
+import logging
 
 
 class MarathonClient():
 
     DCOS_CA = 'dcos-ca.crt'
+    ERR_THRESHOLD = 10
 
     def __init__(self, dcos_master):
         self.dcos_master = dcos_master
         self.dcos_headers = {}
         self.authenticate()
+        self.log = logging.getLogger("autoscaler")
 
     def authenticate(self):
         """Using a userid/pass or a service account secret,
@@ -112,6 +115,7 @@ class MarathonClient():
                     )
 
                 self.log.debug("%s %s %s", method, path, response.status_code)
+                #self.log.debug("response: %s", response.content)
                 done = True
 
                 if response.status_code != 200:
@@ -133,8 +137,7 @@ class MarathonClient():
             except requests.exceptions.HTTPError as http_err:
                 done = False
                 self.log.error("HTTP Error: %s", http_err)
-                # TODO: move out timer
-                self.timer()
+            # TODO: need to add back in timer if failed request
             except json.JSONDecodeError as dec_err:
                 done = False
                 err_num += 1

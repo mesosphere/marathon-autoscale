@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-from autoscaler.modes.scalemode import AbstractMode
+from modes.scalemode import AbstractMode
 
 
 class ScaleCPU(AbstractMode):

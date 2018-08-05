@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 
 
 class AbstractMode(ABC):
@@ -7,6 +8,8 @@ class AbstractMode(ABC):
         super().__init__()
         self.marathon_client = marathon_client
         self.app_name = app_name
+
+        self.log = logging.getLogger("autoscaler")
 
     @abstractmethod
     def get_min(self):
