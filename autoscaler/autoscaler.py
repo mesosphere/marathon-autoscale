@@ -92,26 +92,6 @@ class Autoscaler():
 
         return app_instances
 
-    #def get_all_apps(self):
-
-       # apps = []
-
-        #response = self.marathon_client.dcos_rest(
-         #   "get",
-          #  self.MARATHON_APPS_URI
-        #)
-
-        #if response['apps']:
-         #   for i in response['apps']:
-          #      appid = i['id']
-           #     apps.append(appid)
-            #    self.log.debug("The following apps exist in marathon %s", apps)
-        #else:
-         #   self.log.error("No Apps found on Marathon")
-          #  sys.exit(1)
-
-        #return apps
-
     def app_exists(self):
 
         apps = []
@@ -208,7 +188,7 @@ class Autoscaler():
                             **self.env_or_req('AS_DCOS_MASTER'))
         parser.add_argument('--trigger_mode',
                             help=('Which metric(s) to trigger Autoscale '
-                                  '(and, or, cpu, mem, sqs)'),
+                                  '(cpu, mem, sqs)'),
                             **self.env_or_req('AS_TRIGGER_MODE'))
         parser.add_argument('--autoscale_multiplier',
                             help=('Autoscale multiplier for triggered '
@@ -274,16 +254,6 @@ class Autoscaler():
                 self.log.error("Could not find %s in list of apps.", self.marathon_app)
                 self.timer()
                 continue
-
-            # Get a dictionary of app taskId and hostId for the marathon app
-            #app_task_dict = self.get_app_details()
-
-            # verify if app has any Marathon task data.
-            #if not app_task_dict:
-             #   self.timer()
-              #  continue
-
-            #self.log.debug("Tasks for %s : %s", self.marathon_app, app_task_dict)
 
             # get the scaling mode subclass based on parameter
             mode = self.MODES.get(self.trigger_mode, None)

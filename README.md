@@ -37,22 +37,15 @@ Where the marathon.json has been built from one of the samples:
 
 Input parameters user will be prompted for:
 
-    AS_MARATHON_APP # app to autoscale.
-    AS_TRIGGER_MODE and | or | cpu | mem | sqs #which scaling mode you want
-    AS_AUTOSCALE_MULTIPLIER #multiplier for triggered scale up or down
-    AS_MIN_INSTANCES #min number of instances, don’t make less than 2
-    AS_MAX_INSTANCES #max number of instances, must be greater than AS_MIN_INSTANCES
-    AS_DCOS_MASTER #don’t change unless running marathon-on-marathon
-    AS_MAX_CPU_TIME #max average cpu time as float, e.g. 80 or 80.5
-    AS_MIN_CPU_TIME #min average cpu time as float, e.g. 55 or 55.5
-    AS_MAX_MEM_PERCENT #max avg mem utilization percent as float, e.g. 75 or 75.0
-    AS_MIN_MEM_PERCENT #min avg men utilization percent as float, e.g. 55 or 55.0
+    AS_MARATHON_APP # app to autoscale
+    AS_TRIGGER_MODE # scaling mode (cpu | mem | sqs)
+    AS_AUTOSCALE_MULTIPLIER # multiplier for triggered scale up or down
+    AS_MIN_INSTANCES # min number of instances, don’t make less than 2
+    AS_MAX_INSTANCES # max number of instances, must be greater than AS_MIN_INSTANCES
+    AS_DCOS_MASTER # hostname of dcos master
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
-    AS_TRIGGER_NUMBER # how many times should we pole before scaling up
-    AS_INTERVAL #how often should we poll in seconds
-    AS_MIN_SQS_LENGTH #min number of available messages in the queue
-    AS_MAX_SQS_LENGTH #max number of available messages in the queue
-
+    AS_SCALE_UP_FACTOR # how many times should we pole before scaling up
+    AS_INTERVAL # how often should we poll in seconds
 
 **Notes** 
 
@@ -79,14 +72,6 @@ If you are using SQS as your scaling mode:
     AWS_DEFAULT_REGION #aws region
 
 ## Scaling Modes
-
-#### AND 
-
-In this mode, the system will only scale the service up or down when both CPU and Memory have been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).  Rarely used.
-
-#### OR 
-
-In this mode, the system will scale the service up or down when either the CPU or Memory have been out of range for the number of cycles defined in AS_TRIGGER_NUMBER (for up) or AS_COOL_DOWN_FACTOR (for down).
 
 #### CPU 
 

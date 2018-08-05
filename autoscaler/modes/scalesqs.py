@@ -18,7 +18,7 @@ class ScaleBySQS(AbstractMode):
         logger = logging.getLogger('botocore.vendored.requests')
         logger.setLevel(logging.ERROR)
 
-        # Verify SQS environment vars are present
+        # Verify environment vars for SQS config exist
         if 'AS_SQS_NAME' not in os.environ.keys():
             self.log.error("AS_SQS_NAME env var is not set.")
             sys.exit(1)
@@ -41,7 +41,7 @@ class ScaleBySQS(AbstractMode):
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
         """
-        metric = 0.0
+        value = 0.0
 
         if self.trigger_mode == 'sqs':
 
@@ -59,15 +59,15 @@ class ScaleBySQS(AbstractMode):
                     endpoint_url=endpoint_url
                 )
                 queue = sqs.get_queue_by_name(QueueName=queue_name)
-                metric = float(queue.attributes.get('ApproximateNumberOfMessages'))
+                value = float(queue.attributes.get('ApproximateNumberOfMessages'))
             except ClientError as e:
                 self.log.error("Boto3 client error: %s", e.response)
                 return -1.0
 
             self.log.info("Current available messages for queue %s = %s",
-                          queue_name, metric)
+                          queue_name, value)
 
-        return metric
+        return value
 
     def get_min(self):
         return self.min_range

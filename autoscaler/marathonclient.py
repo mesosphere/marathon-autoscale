@@ -143,6 +143,3 @@ class MarathonClient():
                     self.log.error("FATAL: Threshold of JSON parsing errors "
                                    "exceeded. Shutting down.")
                     sys.exit(1)
-                # TODO: move out timer
-                self.timer()
-
