@@ -4,9 +4,9 @@ import logging
 
 class AbstractMode(ABC):
 
-    def __init__(self, marathon_client, app_name):
+    def __init__(self, api_client, app_name):
         super().__init__()
-        self.marathon_client = marathon_client
+        self.api_client = api_client
         self.app_name = app_name
 
         self.log = logging.getLogger("autoscaler")

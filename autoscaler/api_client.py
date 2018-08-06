@@ -6,7 +6,7 @@ import sys
 import logging
 
 
-class MarathonClient():
+class APIClient():
 
     DCOS_CA = 'dcos-ca.crt'
     ERR_THRESHOLD = 10
