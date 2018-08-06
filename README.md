@@ -2,8 +2,8 @@
 Dockerized auto-scaler application that can be run under Marathon management to dynamically scale a service running on DC/OS.
 
 ## Prerequisites
-A running DC/OS cluster
-DC/OS CLI installed on your local machine
+1. A running DC/OS cluster
+2. DC/OS CLI installed on your local machine
 
 If running on a DC/OS cluster in Permissive or Strict mode, an user or service account with the appropriate permissions to modify Marathon jobs.  An example script for setting up a service account can be found in create-service-account.sh
 
@@ -27,7 +27,7 @@ The create_service_account.sh script takes two parameters:
     $ ./create-service-account.sh [service-account-name] [namespace-path]
 
 ### Marathon definitions
-Update one of the Marathon definitions in the [marathon_defs](marathon_defs/)folder to match your specific configuration. Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
+Update one of the definitions in the [Marathon definitions](marathon_defs/) folder to match your specific configuration. Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
 
 Core environment variables available to the application:
 
