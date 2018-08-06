@@ -101,3 +101,30 @@ In this mode, the system will scale the service up or down when the Memory has b
 #### SQS
 
 In this mode, the system will scale the service up or down when the Queue available message length has been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down). For the Amazon Web Services (AWS) Simple Queue Service (SQS) scaling mode, the queue length will be determined by the approximate number of visible messages attribute. The ApproximateNumberOfMessages attribute returns the approximate number of visible messages in a queue.
+
+## Extending the auto-scaler (adding a new scaling mode)
+In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (min, max, value) of the abstract class ScaleMode.
+
+An example skeleton is below:
+```
+class ScaleByExample(AbstractMode):
+
+    def __init__(self, marathon_client, app_name):
+        super().__init__(marathon_client, app_name)
+
+    def get_value(self):
+
+    def get_min(self):
+
+    def get_max(self):
+```
+
+Once the new subclass is created, add the new mode to the MODE dictionary in autoscaler.py.
+```
+    # Dict defines the different scaling modes available to autoscaler
+    MODES = {
+        'sqs': ScaleBySQS,
+        'cpu': ScaleCPU,
+        'example': ScaleByExample
+    }
+```
