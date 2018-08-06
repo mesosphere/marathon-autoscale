@@ -107,7 +107,7 @@ class ScaleCPU(AbstractMode):
 
         app_task_dict = {}
 
-        response = super().marathon_client.dcos_rest(
+        response = super().api_client.dcos_rest(
             "get",
             '/service/marathon/v2/apps/' + app_name
         )

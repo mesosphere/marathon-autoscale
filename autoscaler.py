@@ -6,7 +6,7 @@ import time
 import math
 import argparse
 
-from modes.marathonclient import MarathonClient
+from modes.api_client import APIClient
 from modes.scalecpu import ScaleCPU
 from modes.scalesqs import ScaleBySQS
 
@@ -64,7 +64,7 @@ class Autoscaler():
         )
 
         # Initialize marathon client for auth requests
-        self.marathon_client = MarathonClient(self.dcos_master)
+        self.api_client = APIClient(self.dcos_master)
 
     def timer(self):
         """Simple timer function"""
@@ -76,7 +76,7 @@ class Autoscaler():
 
         app_instances = 0
 
-        response = self.marathon_client.dcos_rest(
+        response = self.api_client.dcos_rest(
             "get",
             self.MARATHON_APPS_URI + self.marathon_app
         )
@@ -95,7 +95,7 @@ class Autoscaler():
         apps = []
 
         # Query marathon for a list of its apps
-        response = self.marathon_client.dcos_rest(
+        response = self.api_client.dcos_rest(
             "get",
             self.MARATHON_APPS_URI
         )
@@ -167,7 +167,7 @@ class Autoscaler():
         if app_instances != target_instances:
             data = {'instances': target_instances}
             json_data = json.dumps(data)
-            response = self.marathon_client.dcos_rest(
+            response = self.api_client.dcos_rest(
                 "put",
                 '/service/marathon/v2/apps/' + self.marathon_app,
                 data=json_data
@@ -260,7 +260,7 @@ class Autoscaler():
                 sys.exit(1)
 
             # Instantiate the scaling mode class
-            scaling_mode = mode(self.marathon_client, self.marathon_app)
+            scaling_mode = mode(self.api_client, self.marathon_app)
 
             # Get the mode dimension and actual metric
             min = float(scaling_mode.get_min())
