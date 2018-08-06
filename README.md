@@ -27,7 +27,7 @@ The create_service_account.sh script takes two parameters:
     $ ./create-service-account.sh [service-account-name] [namespace-path]
 
 ### Marathon definitions
-Update one of the Marathon definitions in the /marathon_defs folder to match your specific configuration.
+Update one of the Marathon definitions in the [marathon_defs](marathon_defs/)folder to match your specific configuration. Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
 
 Core environment variables available to the application:
 
@@ -82,11 +82,7 @@ Where the marathon.json has been built from one of the samples:
     autoscale-sqs-noauth-marathon.json #security disabled or OSS DC/OS
     autoscale-cpu-svcacct-marathon.json #security permissive or strict on Enterprise DC/OS, using service account and private key (private key stored as a secret)
 
-Verify the app is added with this command. `$ dcos marathon app list`
-
-**Notes** 
-
-Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
+Verify the app is added with the command `$ dcos marathon app list`
 
 ## Scaling Modes
 
