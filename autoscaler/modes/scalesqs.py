@@ -5,7 +5,7 @@ import logging
 from boto3 import resource
 from botocore.errorfactory import ClientError
 
-from modes.scalemode import AbstractMode
+from autoscaler.modes.scalemode import AbstractMode
 
 
 class ScaleBySQS(AbstractMode):
@@ -41,8 +41,6 @@ class ScaleBySQS(AbstractMode):
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
         """
-        value = 0.0
-
         endpoint_url = os.environ.get('AS_SQS_ENDPOINT')
         queue_name = os.environ.get('AS_SQS_NAME')
 

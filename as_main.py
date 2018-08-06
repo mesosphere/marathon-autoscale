@@ -6,23 +6,22 @@ import time
 import math
 import argparse
 
-from modes.marathonclient import MarathonClient
-from modes.scalecpu import ScaleCPU
-from modes.scalesqs import ScaleBySQS
+from autoscaler.marathonclient import MarathonClient
+from autoscaler.modes.scalecpu import ScaleCPU
+from autoscaler.modes.scalesqs import ScaleBySQS
 
 class Autoscaler():
-    """Marathon auto scaler
-    upon initialization, it reads a list of command line parameters or env
-    variables. Then it logs in to DCOS and starts querying metrics relevant
-    to the scaling objective (cpu,mem). Scaling can happen by cpu, mem,
-    cpu and mem, cpu or mem. The checks are performed on a configurable
-    interval.
+    """Marathon auto scaler upon initialization, it reads a list of
+    command line parameters or env variables. Then it logs in to DCOS
+    and starts querying metrics relevant to the scaling
+    objective (cpu, mem, sqs). Scaling can happen by cpu, mem,
+    or sqs. The checks are performed on a configurable interval.
     """
 
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
-    # Dict defines the different scaling modes available to autoscaler
+    # Dict defines the different scaling autoscaler available to autoscaler
     MODES = {
         'sqs': ScaleBySQS,
         'cpu': ScaleCPU
@@ -108,7 +107,7 @@ class Autoscaler():
             if self.marathon_app in apps:
                 return True
         except KeyError:
-            self.log.error("No Apps found in Marathon")
+            self.log.error("Error: KeyError when testing for apps existence")
             sys.exit(1)
 
         return False
@@ -262,7 +261,7 @@ class Autoscaler():
             # Instantiate the scaling mode class
             scaling_mode = mode(self.marathon_client, self.marathon_app)
 
-            # Get the mode dimension and actual metric
+            # Get the mode dimension and value
             min = float(scaling_mode.get_min())
             max = float(scaling_mode.get_max())
             value = float(scaling_mode.get_value())
