@@ -61,41 +61,31 @@ class ScaleCPU(AbstractMode):
     def get_cpu_usage(self, task, agent):
         """Compute the cpu usage per task per agent
         """
-        task_stats = self.get_task_agent_stats(task, agent)
+        cpu_sys_time = []
+        cpu_user_time = []
+        timestamp = []
 
-        cpus_system_time_secs0 = 0
-        cpus_user_time_secs0 = 0
-        timestamp0 = 0
+        for i in range(2):
+            task_stats = self.get_task_agent_stats(task, agent)
+            if task_stats is not None:
+                cpu_sys_time.append(float(task_stats['cpus_system_time_secs']))
+                cpu_user_time.append(float(task_stats['cpus_user_time_secs']))
+                timestamp.append(float(task_stats['timestamp']))
+            else:
+                cpu_sys_time.append(0.0)
+                cpu_user_time.append(0.0)
+                timestamp.append(0.0)
+            time.sleep(1)
 
-        if task_stats is not None:
-            cpus_system_time_secs0 = float(task_stats['cpus_system_time_secs'])
-            cpus_user_time_secs0 = float(task_stats['cpus_user_time_secs'])
-            timestamp0 = float(task_stats['timestamp'])
-
-        time.sleep(1)
-
-        task_stats = self.get_task_agent_stats(task, agent)
-
-        cpus_system_time_secs1 = 0
-        cpus_user_time_secs1 = 0
-        timestamp1 = 0
-
-        if task_stats is not None:
-            cpus_system_time_secs1 = float(task_stats['cpus_system_time_secs'])
-            cpus_user_time_secs1 = float(task_stats['cpus_user_time_secs'])
-            timestamp1 = float(task_stats['timestamp'])
-
-        cpus_time_total0 = cpus_system_time_secs0 + cpus_user_time_secs0
-        cpus_time_total1 = cpus_system_time_secs1 + cpus_user_time_secs1
-        cpus_time_delta = cpus_time_total1 - cpus_time_total0
-        timestamp_delta = timestamp1 - timestamp0
+        cpu_time_delta = (cpu_sys_time[1] + cpu_user_time[1]) - (cpu_sys_time[0] + cpu_user_time[0])
+        timestamp_delta = timestamp[1] - timestamp[0]
 
         # CPU percentage usage
         if timestamp_delta == 0:
             self.log.error("timestamp_delta for task %s agent %s is 0", task, agent)
             return -1.0
 
-        cpu_usage = float(cpus_time_delta / timestamp_delta) * 100
+        cpu_usage = float(cpu_time_delta / timestamp_delta) * 100
 
         return cpu_usage
 
@@ -136,7 +126,7 @@ class ScaleCPU(AbstractMode):
             statistics for the specific task
         """
 
-        response = self.marathon_client.dcos_rest(
+        response = self.api_client.dcos_rest(
             "get",
             '/slave/' + agent + '/monitor/statistics.json'
         )
