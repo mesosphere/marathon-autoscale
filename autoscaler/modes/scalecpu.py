@@ -5,7 +5,7 @@ import time
 from autoscaler.modes.scalemode import AbstractMode
 
 
-class ScaleCPU(AbstractMode):
+class ScaleByCPU(AbstractMode):
 
     def __init__(self, marathon_client, app_name):
 

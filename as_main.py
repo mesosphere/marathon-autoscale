@@ -7,7 +7,7 @@ import math
 import argparse
 
 from autoscaler.api_client import APIClient
-from autoscaler.modes.scalecpu import ScaleCPU
+from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalesqs import ScaleBySQS
 
 class Autoscaler():
@@ -24,7 +24,7 @@ class Autoscaler():
     # Dict defines the different scaling autoscaler available to autoscaler
     MODES = {
         'sqs': ScaleBySQS,
-        'cpu': ScaleCPU
+        'cpu': ScaleByCPU
     }
 
     def __init__(self):
