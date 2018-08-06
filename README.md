@@ -121,10 +121,10 @@ class ScaleByExample(AbstractMode):
 
 Once the new subclass is created, add the new mode to the MODE dictionary in autoscaler.py.
 ```
-    # Dict defines the different scaling modes available to autoscaler
-    MODES = {
-        'sqs': ScaleBySQS,
-        'cpu': ScaleCPU,
-        'example': ScaleByExample
-    }
+# Dict defines the different scaling modes available to autoscaler
+MODES = {
+    'sqs': ScaleBySQS,
+    'cpu': ScaleCPU,
+    'example': ScaleByExample
+}
 ```
