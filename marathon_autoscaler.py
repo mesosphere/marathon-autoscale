@@ -65,9 +65,9 @@ class Autoscaler:
 
         # Instantiate the scaling mode class
         self.scaling_mode = mode(
-            self.api_client,
-            self.marathon_app,
-            mode_dimension
+            api_client=self.api_client,
+            app_name=self.marathon_app,
+            dimension=mode_dimension
         )
 
         # Start logging

@@ -107,8 +107,8 @@ An example skeleton is below:
 ```
 class ScaleByExample(AbstractMode):
 
-    def __init__(self, marathon_client, app_name, dimension):
-        super().__init__(marathon_client, app_name, dimension)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def get_value(self):
 
