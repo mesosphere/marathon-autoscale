@@ -4,7 +4,7 @@ import os
 from autoscaler.modes.scalemode import AbstractMode
 
 
-class ScaleByCPU(AbstractMode):
+class ScaleByMemory(AbstractMode):
 
     def __init__(self, marathon_client, app_name):
 

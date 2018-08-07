@@ -9,6 +9,7 @@ import argparse
 from autoscaler.api_client import APIClient
 from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalesqs import ScaleBySQS
+from autoscaler.modes.scalemem import ScaleByMemory
 
 class Autoscaler():
     """Marathon auto scaler upon initialization, it reads a list of
@@ -24,7 +25,8 @@ class Autoscaler():
     # Dict defines the different scaling autoscaler available to autoscaler
     MODES = {
         'sqs': ScaleBySQS,
-        'cpu': ScaleByCPU
+        'cpu': ScaleByCPU,
+        'mem': ScaleByMemory
     }
 
     def __init__(self):
