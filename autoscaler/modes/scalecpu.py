@@ -1,5 +1,3 @@
-import os
-import sys
 import time
 
 from autoscaler.modes.scalemode import AbstractMode
@@ -8,7 +6,6 @@ from autoscaler.modes.scalemode import AbstractMode
 class ScaleByCPU(AbstractMode):
 
     def __init__(self, **kwargs):
-
         super().__init__(**kwargs)
 
     def get_value(self):
@@ -48,8 +45,7 @@ class ScaleByCPU(AbstractMode):
         return self.dimension["max_range"]
 
     def get_cpu_usage(self, task, agent):
-        """Compute the cpu usage per task per agent
-        """
+        """Compute the cpu usage per task per agent"""
         cpu_sys_time = []
         cpu_user_time = []
         timestamp = []
@@ -57,13 +53,13 @@ class ScaleByCPU(AbstractMode):
         for i in range(2):
             task_stats = self.get_task_agent_stats(task, agent)
             if task_stats is not None:
-                cpu_sys_time.append(float(task_stats['cpus_system_time_secs']))
-                cpu_user_time.append(float(task_stats['cpus_user_time_secs']))
-                timestamp.append(float(task_stats['timestamp']))
+                cpu_sys_time.insert(i, float(task_stats['cpus_system_time_secs']))
+                cpu_user_time.insert(i, float(task_stats['cpus_user_time_secs']))
+                timestamp.insert(i, float(task_stats['timestamp']))
             else:
-                cpu_sys_time.append(0.0)
-                cpu_user_time.append(0.0)
-                timestamp.append(0.0)
+                cpu_sys_time.insert(i, 0.0)
+                cpu_user_time.insert(i, 0.0)
+                timestamp.insert(i, 0.0)
             time.sleep(1)
 
         cpu_time_delta = (cpu_sys_time[1] + cpu_user_time[1]) - (cpu_sys_time[0] + cpu_user_time[0])

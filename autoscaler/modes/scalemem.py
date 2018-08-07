@@ -1,5 +1,3 @@
-import sys
-import os
 
 from autoscaler.modes.scalemode import AbstractMode
 
@@ -7,7 +5,6 @@ from autoscaler.modes.scalemode import AbstractMode
 class ScaleByMemory(AbstractMode):
 
     def __init__(self, **kwargs):
-
         super().__init__(**kwargs)
 
     def get_value(self):
