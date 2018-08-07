@@ -36,6 +36,17 @@ class Autoscaler:
         Set up logging according to the verbosity requested.
         """
 
+        # Start logging
+        if self.verbose:
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
+
+        logging.basicConfig(
+            level=level,
+            format=self.LOGGING_FORMAT
+        )
+
         self.log = logging.getLogger("autoscaler")
 
         self.scale_up = 0
@@ -57,7 +68,10 @@ class Autoscaler:
         mode_dimension["max_range"] = args.max_range
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
 
-        # get the scaling mode subclass based on env var
+        # Initialize marathon client for auth requests
+        self.api_client = APIClient(self.dcos_master)
+
+        # get the scaling mode subclass based on env vars
         mode = self.MODES.get(self.trigger_mode, None)
         if mode is None:
             self.log.error("Scale mode is not found.")
@@ -69,20 +83,6 @@ class Autoscaler:
             app_name=self.marathon_app,
             dimension=mode_dimension
         )
-
-        # Start logging
-        if self.verbose:
-            level = logging.DEBUG
-        else:
-            level = logging.INFO
-
-        logging.basicConfig(
-            level=level,
-            format=self.LOGGING_FORMAT
-        )
-
-        # Initialize marathon client for auth requests
-        self.api_client = APIClient(self.dcos_master)
 
     def timer(self):
         """Simple timer function"""
@@ -236,7 +236,7 @@ class Autoscaler:
                                   'checks (ie. 20)'),
                             **self.env_or_req('AS_INTERVAL'), type=int)
         parser.add_argument('--min_range',
-                            help=('The minimum bounds of the scaling modes '
+                            help=('The minimum range of the scaling modes '
                                   'dimension.'),
                             **self.env_or_req('AS_MIN_RANGE'), type=float)
         parser.add_argument('--max_range',

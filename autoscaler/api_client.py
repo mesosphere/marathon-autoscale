@@ -133,6 +133,7 @@ class APIClient:
                     content = "{}"
 
                 result = json.loads(content)
+
                 return result
 
             except requests.exceptions.HTTPError as http_err:
