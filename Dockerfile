@@ -3,7 +3,6 @@
 #
 
 FROM python:3-alpine
-MAINTAINER Adam Iezzi <aiezzi@blacksky.com>
 
 # Copy the python scripts into the working directory
 ADD / /marathon-autoscale
