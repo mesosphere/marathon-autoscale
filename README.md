@@ -127,3 +127,31 @@ MODES = {
     'example': ScaleByExample
 }
 ```
+
+## Examples
+The following examples execute the python application from the command line.
+
+#### (Optional) Only if using username/password or a service account
+
+    export AS_USERID=some-user-id
+    export AS_PASSWORD=some-password
+    -or-
+    export AS_SECRET=dc-os-secret-formatted-json
+
+#### SQS message queue length as autoscale trigger
+
+    export AS_SQS_NAME=testQueue
+    export AS_SQS_ENDPOINT=https://sqs.us-east-1.amazonaws.com
+    export AWS_ACCESS_KEY_ID=
+    export AWS_SECRET_ACCESS_KEY=
+    export AWS_DEFAULT_REGION=us-east-1
+
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode sqs --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 2.0 --max_range 10.0
+
+#### CPU as autoscale trigger
+
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode cpu --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5 --max_range 80.0
+
+#### Memory as autoscale trigger
+
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode mem --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5 --max_range 75.0
