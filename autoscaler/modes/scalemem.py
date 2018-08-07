@@ -6,20 +6,9 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByMemory(AbstractMode):
 
-    def __init__(self, marathon_client, app_name):
+    def __init__(self, marathon_client, app_name, dimension):
 
-        super().__init__(marathon_client, app_name)
-
-        if 'AS_MIN_MEM_PERCENT' not in os.environ.keys():
-            self.log.error("AS_MIN_MEM_PERCENT env var is not set.")
-            sys.exit(1)
-
-        if 'AS_MAX_MEM_PERCENT' not in os.environ.keys():
-            self.log.error("AS_MAX_MEM_PERCENT env var is not set.")
-            sys.exit(1)
-
-        self.min_range = float(os.environ.get('AS_MIN_MEM_PERCENT'))
-        self.max_range = float(os.environ.get('AS_MAX_MEM_PERCENT'))
+        super().__init__(marathon_client, app_name, dimension)
 
     def get_value(self):
 
@@ -49,10 +38,10 @@ class ScaleByMemory(AbstractMode):
                       super().app_name, app_avg_mem)
 
     def get_min(self):
-        return self.min_range
+        return super().dimension["min_range"]
 
     def get_max(self):
-        return self.max_range
+        return super().dimension["max_range"]
 
     def get_mem_usage(self, task, agent):
         """Calculate memory usage for the task on the given agent

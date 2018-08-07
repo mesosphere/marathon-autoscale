@@ -7,20 +7,9 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByCPU(AbstractMode):
 
-    def __init__(self, marathon_client, app_name):
+    def __init__(self, marathon_client, app_name, dimension):
 
-        super().__init__(marathon_client, app_name)
-
-        if 'AS_MIN_CPU_TIME' not in os.environ.keys():
-            self.log.error("AS_MIN_CPU_TIME env var is not set.")
-            sys.exit(1)
-
-        if 'AS_MAX_CPU_TIME' not in os.environ.keys():
-            self.log.error("AS_MAX_CPU_TIME env var is not set.")
-            sys.exit(1)
-
-        self.min_range = float(os.environ.get('AS_MIN_CPU_TIME'))
-        self.max_range = float(os.environ.get('AS_MAX_CPU_TIME'))
+        super().__init__(marathon_client, app_name, dimension)
 
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
@@ -53,10 +42,10 @@ class ScaleByCPU(AbstractMode):
         return value
 
     def get_min(self):
-        return self.min_range
+        return super().dimension["min_range"]
 
     def get_max(self):
-        return self.max_range
+        return super().dimension["max_range"]
 
     def get_cpu_usage(self, task, agent):
         """Compute the cpu usage per task per agent

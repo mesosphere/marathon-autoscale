@@ -39,6 +39,7 @@ class Autoscaler():
 
         self.scale_up = 0
         self.cool_down = 0
+        mode_dimension = {}
 
         args = self.parse_arguments()
 
@@ -51,7 +52,22 @@ class Autoscaler():
         self.cool_down_factor = float(args.cool_down_factor)
         self.scale_up_factor = float(args.scale_up_factor)
         self.interval = args.interval
+        mode_dimension["min_range"] = args.min_range
+        mode_dimension["max_range"] = args.max_range
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
+
+        # get the scaling mode subclass based on env var
+        mode = self.MODES.get(self.trigger_mode, None)
+        if mode is None:
+            self.log.error("Scale mode is not found.")
+            sys.exit(1)
+
+        # Instantiate the scaling mode class
+        self.scaling_mode = mode(
+            self.api_client,
+            self.marathon_app,
+            mode_dimension
+        )
 
         # Start logging
         if self.verbose:
@@ -214,6 +230,14 @@ class Autoscaler():
                             help=('Time in seconds to wait between '
                                   'checks (ie. 20)'),
                             **self.env_or_req('AS_INTERVAL'), type=int)
+        parser.add_argument('--min_range',
+                            help=('The minimum bounds of the scaling modes '
+                                  'dimension.'),
+                            **self.env_or_req('AS_MIN_RANGE'), type=float)
+        parser.add_argument('--max_range',
+                            help=('The maximum range of the scaling modes '
+                                  'dimension'),
+                            **self.env_or_req('AS_MAX_RANGE'), type=float)
         parser.add_argument('-v', '--verbose', action="store_true",
                             help='Display DEBUG messages')
 
@@ -254,19 +278,10 @@ class Autoscaler():
                 self.timer()
                 continue
 
-            # get the scaling mode subclass based on parameter
-            mode = self.MODES.get(self.trigger_mode, None)
-            if mode is None:
-                self.log.error("Scale mode is not found.")
-                sys.exit(1)
-
-            # Instantiate the scaling mode class
-            scaling_mode = mode(self.api_client, self.marathon_app)
-
             # Get the mode dimension and value
-            min = float(scaling_mode.get_min())
-            max = float(scaling_mode.get_max())
-            value = float(scaling_mode.get_value())
+            min = float(self.scaling_mode.get_min())
+            max = float(self.scaling_mode.get_max())
+            value = float(self.scaling_mode.get_value())
 
             if value == -1.0:
                 self.timer()

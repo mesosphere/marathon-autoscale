@@ -40,6 +40,8 @@ Core environment variables available to the application:
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
     AS_SCALE_UP_FACTOR # how many times should we pole before scaling up
     AS_INTERVAL # how often should we poll in seconds
+    AS_MIN_RANGE # minimum range of the scaling modes dimension
+    AS_MAX_RANGE # maximum range of the scaling modes dimension
     AS_VERBOSE # verbose logging for debugging
 
 If you are using an authentication:
@@ -51,13 +53,13 @@ If you are using an authentication:
 
 If you are using CPU as your scaling mode:
 
-    AS_MAX_CPU_TIME # max average cpu time as float, e.g. 80 or 80.5
-    AS_MIN_CPU_TIME # min average cpu time as float, e.g. 55 or 55.5
+    AS_MAX_RANGE # max average cpu time as float, e.g. 80 or 80.5
+    AS_MIN_RANGE # min average cpu time as float, e.g. 55 or 55.5
 
 If you are using Memory as your scaling mode:
 
-    AS_MAX_MEM_PERCENT # max avg mem utilization percent as float, e.g. 75 or 75.0
-    AS_MIN_MEM_PERCENT # min avg men utilization percent as float, e.g. 55 or 55.0
+    AS_MAX_RANGE # max avg mem utilization percent as float, e.g. 75 or 75.0
+    AS_MIN_RANGE # min avg men utilization percent as float, e.g. 55 or 55.0
 
 If you are using SQS as your scaling mode:
 
@@ -66,8 +68,8 @@ If you are using SQS as your scaling mode:
     AWS_ACCESS_KEY_ID # aws access key
     AWS_SECRET_ACCESS_KEY # aws secret key
     AWS_DEFAULT_REGION # aws region
-    AS_MIN_SQS_LENGTH # min number of available messages in the queue
-    AS_MAX_SQS_LENGTH # max number of available messages in the queue
+    AS_MIN_RANGE # min number of available messages in the queue
+    AS_MAX_RANGE # max number of available messages in the queue
 
 ## Program Execution / Usage
 
@@ -105,8 +107,8 @@ An example skeleton is below:
 ```
 class ScaleByExample(AbstractMode):
 
-    def __init__(self, marathon_client, app_name):
-        super().__init__(marathon_client, app_name)
+    def __init__(self, marathon_client, app_name, dimension):
+        super().__init__(marathon_client, app_name, dimension)
 
     def get_value(self):
 
@@ -120,7 +122,8 @@ Once the new subclass is created, add the new mode to the MODE dictionary in aut
 # Dict defines the different scaling modes available to autoscaler
 MODES = {
     'sqs': ScaleBySQS,
-    'cpu': ScaleCPU,
+    'cpu': ScaleByCPU,
+    'mem': ScaleByMemory,
     'example': ScaleByExample
 }
 ```

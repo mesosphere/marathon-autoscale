@@ -10,9 +10,9 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    def __init__(self, marathon_client, app_name):
+    def __init__(self, marathon_client, app_name, dimension):
 
-        super().__init__(marathon_client, app_name)
+        super().__init__(marathon_client, app_name, dimension)
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
@@ -26,17 +26,6 @@ class ScaleBySQS(AbstractMode):
         if 'AS_SQS_ENDPOINT' not in os.environ.keys():
             self.log.error("AS_SQS_ENDPOINT env var is not set.")
             sys.exit(1)
-
-        if 'AS_MIN_SQS_LENGTH' not in os.environ.keys():
-            self.log.error("AS_MIN_SQS_LENGTH env var is not set.")
-            sys.exit(1)
-
-        if 'AS_MAX_SQS_LENGTH' not in os.environ.keys():
-            self.log.error("AS_MIN_SQS_LENGTH env var is not set.")
-            sys.exit(1)
-
-        self.min_range = float(os.environ.get('AS_MIN_SQS_LENGTH'))
-        self.max_range = float(os.environ.get('AS_MAX_SQS_LENGTH'))
 
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
@@ -66,7 +55,7 @@ class ScaleBySQS(AbstractMode):
         return value
 
     def get_min(self):
-        return self.min_range
+        return super().dimension["min_range"]
 
     def get_max(self):
-        return self.max_range
+        return super().dimension["max_range"]
