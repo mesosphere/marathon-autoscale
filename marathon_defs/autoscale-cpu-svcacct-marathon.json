@@ -15,7 +15,7 @@
     "type": "DOCKER",
     "volumes": [],
     "docker": {
-      "image": "adamiezzi/autoscaler",
+      "image": "adamiezzi/marathon-autoscale",
       "portMappings": [],
       "privileged": false,
       "parameters": [],

@@ -14,8 +14,8 @@ If running on a DC/OS cluster in Permissive or Strict mode, an user or service a
 How to build the container:
     
     docker build .
-    docker tag <tag-id> <docker-hub-name>:marathon-autoscale:latest
-    docker push <docker-hub-name>:marathon-autoscale:latest
+    docker tag <tag-id> <docker-hub-name>/marathon-autoscale:latest
+    docker push <docker-hub-name>/marathon-autoscale:latest
 
 ### (Optional) Creating a service account
 
