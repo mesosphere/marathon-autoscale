@@ -11,7 +11,8 @@ from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalesqs import ScaleBySQS
 from autoscaler.modes.scalemem import ScaleByMemory
 
-class Autoscaler():
+
+class Autoscaler:
     """Marathon auto scaler upon initialization, it reads a list of
     command line parameters or env variables. Then it logs in to DCOS
     and starts querying metrics relevant to the scaling
@@ -130,7 +131,11 @@ class Autoscaler():
 
         return False
 
-    def autoscale(self, min, max, value):
+    def autoscale(self, **kwargs):
+
+        min = kwargs.get("min", 0.0)
+        max = kwargs.get("max", 1.0)
+        value = kwargs.get("value", 0.0)
 
         if min <= value <= max:
             self.log.info("%s within thresholds" % self.trigger_mode)
@@ -288,7 +293,10 @@ class Autoscaler():
                 continue
 
             # Evaluate whether to auto-scale
-            self.autoscale(min, max, value)
+            self.autoscale(
+                min=min,
+                max=max,
+                value=value)
             self.timer()
 
 

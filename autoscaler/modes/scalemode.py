@@ -4,11 +4,13 @@ import logging
 
 class AbstractMode(ABC):
 
-    def __init__(self, api_client, app_name, dimension):
+    def __init__(self, **kwargs):
+
         super().__init__()
-        self.api_client = api_client
-        self.app_name = app_name
-        self.dimension = dimension
+
+        self.api_client = kwargs.get("api_client")
+        self.app_name = kwargs.get("app_name")
+        self.dimension = kwargs.get("dimension")
 
         self.log = logging.getLogger("autoscaler")
 

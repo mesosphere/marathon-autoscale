@@ -10,9 +10,9 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    def __init__(self, marathon_client, app_name, dimension):
+    def __init__(self, **kwargs):
 
-        super().__init__(marathon_client, app_name, dimension)
+        super().__init__(**kwargs)
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
@@ -55,7 +55,7 @@ class ScaleBySQS(AbstractMode):
         return value
 
     def get_min(self):
-        return super().dimension["min_range"]
+        return self.dimension["min_range"]
 
     def get_max(self):
-        return super().dimension["max_range"]
+        return self.dimension["max_range"]

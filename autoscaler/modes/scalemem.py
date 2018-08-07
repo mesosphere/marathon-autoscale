@@ -6,16 +6,16 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByMemory(AbstractMode):
 
-    def __init__(self, marathon_client, app_name, dimension):
+    def __init__(self, **kwargs):
 
-        super().__init__(marathon_client, app_name, dimension)
+        super().__init__(**kwargs)
 
     def get_value(self):
 
         app_mem_values = []
 
         # Get a dictionary of app taskId and hostId for the marathon app
-        app_task_dict = super().get_app_details()
+        app_task_dict = self.get_app_details()
 
         # verify if app has any Marathon task data.
         if not app_task_dict:
@@ -35,18 +35,18 @@ class ScaleByMemory(AbstractMode):
         # Normalized data for all tasks into a single value by averaging
         app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
         self.log.info("Current average Memory utilization for app %s = %s",
-                      super().app_name, app_avg_mem)
+                      self.app_name, app_avg_mem)
 
     def get_min(self):
-        return super().dimension["min_range"]
+        return self.dimension["min_range"]
 
     def get_max(self):
-        return super().dimension["max_range"]
+        return self.dimension["max_range"]
 
     def get_mem_usage(self, task, agent):
         """Calculate memory usage for the task on the given agent
         """
-        task_stats = super().get_task_agent_stats(task, agent)
+        task_stats = self.get_task_agent_stats(task, agent)
 
         # RAM usage
         if task_stats is not None:

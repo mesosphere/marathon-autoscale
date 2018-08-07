@@ -4,9 +4,10 @@ import json
 import jwt
 import sys
 import logging
+import time
 
 
-class APIClient():
+class APIClient:
 
     DCOS_CA = 'dcos-ca.crt'
     ERR_THRESHOLD = 10
@@ -137,10 +138,10 @@ class APIClient():
             except requests.exceptions.HTTPError as http_err:
                 done = False
                 self.log.error("HTTP Error: %s", http_err)
-            # TODO: need to add back in timer if failed request
             except json.JSONDecodeError as dec_err:
                 done = False
                 err_num += 1
+                time.sleep(10)
                 self.log.error("Non JSON result returned: %s", dec_err)
                 if err_num > self.ERR_THRESHOLD:
                     self.log.error("FATAL: Threshold of JSON parsing errors "
