@@ -36,19 +36,6 @@ class Autoscaler:
         Set up logging according to the verbosity requested.
         """
 
-        # Start logging
-        if self.verbose:
-            level = logging.DEBUG
-        else:
-            level = logging.INFO
-
-        logging.basicConfig(
-            level=level,
-            format=self.LOGGING_FORMAT
-        )
-
-        self.log = logging.getLogger("autoscaler")
-
         self.scale_up = 0
         self.cool_down = 0
         mode_dimension = {}
@@ -83,6 +70,19 @@ class Autoscaler:
             app_name=self.marathon_app,
             dimension=mode_dimension
         )
+
+        # Start logging
+        if self.verbose:
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
+
+        logging.basicConfig(
+            level=level,
+            format=self.LOGGING_FORMAT
+        )
+
+        self.log = logging.getLogger("autoscaler")
 
     def timer(self):
         """Simple timer function"""
