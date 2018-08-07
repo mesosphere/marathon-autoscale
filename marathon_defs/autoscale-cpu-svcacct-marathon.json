@@ -15,7 +15,7 @@
     "type": "DOCKER",
     "volumes": [],
     "docker": {
-      "image": "keithmcclellan/marathon-autoscale",
+      "image": "adamiezzi/autoscaler",
       "portMappings": [],
       "privileged": false,
       "parameters": [],
@@ -29,6 +29,11 @@
     "minimumHealthCapacity": 1,
     "maximumOverCapacity": 1
   },
+  "secrets": {
+    "secret0": {
+      "source": "as_secret"
+    }
+  },
   "unreachableStrategy": {
     "inactiveAfterSeconds": 300,
     "expungeAfterSeconds": 600
@@ -37,16 +42,17 @@
   "portDefinitions": [],
   "requirePorts": false,
   "env": {
-    "AS_TRIGGER_MODE": "or",
+    "AS_SECRET": {
+      "secret": "secret0"
+    },
+    "AS_USERID": "autoscaling",
+    "AS_TRIGGER_MODE": "cpu",
     "AS_MIN_INSTANCES": "2",
     "AS_COOL_DOWN_FACTOR": "4",
     "AS_MAX_INSTANCES": "6",
     "AS_DCOS_MASTER": "https://leader.mesos",
-    "AS_MAX_CPU_TIME": "80",
-    "AS_MIN_CPU_TIME": "55",
-    "AS_USERID": "bootstrapuser",
-    "AS_MAX_MEM_PERCENT": "80",
-    "AS_MIN_MEM_PERCENT": "45",
+    "AS_MAX_RANGE": "80",
+    "AS_MIN_RANGE": "55",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
     "AS_TRIGGER_NUMBER": "3",
     "AS_MARATHON_APP": "tweeter",
