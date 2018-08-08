@@ -5,8 +5,8 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByCPU(AbstractMode):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, api_client=None, app_name=None, dimension=None):
+        super().__init__(api_client, app_name, dimension)
 
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue

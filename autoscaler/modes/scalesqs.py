@@ -10,9 +10,9 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    def __init__(self, **kwargs):
+    def __init__(self,  api_client=None, app_name=None, dimension=None):
 
-        super().__init__(**kwargs)
+        super().__init__( api_client, app_name, dimension)
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
