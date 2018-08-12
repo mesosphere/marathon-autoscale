@@ -38,11 +38,14 @@ Core environment variables available to the application:
     AS_MAX_INSTANCES # max number of instances, must be greater than AS_MIN_INSTANCES
     AS_DCOS_MASTER # hostname of dcos master
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
-    AS_SCALE_UP_FACTOR # how many times should we pole before scaling up
-    AS_INTERVAL # how often should we poll in seconds
-    AS_MIN_RANGE # minimum range of the scaling modes dimension
-    AS_MAX_RANGE # maximum range of the scaling modes dimension
-    AS_VERBOSE # verbose logging for debugging
+    AS_TRIGGER_NUMBER # how many times should we pole before scaling up
+    AS_INTERVAL #how often should we poll in seconds
+    AS_AUTOSCALE_MULTIPLIER # The number by which current instances will be multiplied (scale-out) or divided (scale-in). This determines how many instances to add during scale-out, or remove during scale-in.
+
+**Notes** 
+
+For MIN_CPU_TIME and MAX_CPU_TIME on multicore containers, the calculation for determining the value is # of CPU * desired CPU utilization percentage = CPU time (e.g. 80 cpu time * 2 cpu = 160 cpu time)
+For MIN_MEM_PERCENT and MAX_MEM_PERCENT on very small containers, remember that Mesos adds 32MB to the container spec for container overhead (namespace and cgroup), so your target percentages should take that into account.  Alternatively, consider using the CPU only scaling mode for containers with very small memory footprints.
 
 If you are using an authentication:
 
