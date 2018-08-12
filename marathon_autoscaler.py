@@ -5,12 +5,14 @@ import sys
 import time
 import math
 import argparse
+import urllib3
 
 from autoscaler.api_client import APIClient
 from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalesqs import ScaleBySQS
 from autoscaler.modes.scalemem import ScaleByMemory
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class Autoscaler:
     """Marathon auto scaler upon initialization, it reads a list of
@@ -45,11 +47,11 @@ class Autoscaler:
         self.dcos_master = args.dcos_master
         self.trigger_mode = args.trigger_mode
         self.autoscale_multiplier = float(args.autoscale_multiplier)
-        self.max_instances = float(args.max_instances)
         self.marathon_app = args.marathon_app
-        self.min_instances = float(args.min_instances)
-        self.cool_down_factor = float(args.cool_down_factor)
-        self.scale_up_factor = float(args.scale_up_factor)
+        self.min_instances = int(args.min_instances)
+        self.max_instances = int(args.max_instances)
+        self.cool_down_factor = int(args.cool_down_factor)
+        self.scale_up_factor = int(args.scale_up_factor)
         self.interval = args.interval
         mode_dimension["min_range"] = args.min_range
         mode_dimension["max_range"] = args.max_range
@@ -144,7 +146,7 @@ class Autoscaler:
         elif value > max:
             self.scale_up += 1
             self.cool_down = 0
-            if self.scale_up > self.scale_up_factor:
+            if self.scale_up >= self.scale_up_factor:
                 self.log.info("Auto-scale triggered based on %s exceeding threshold" % self.trigger_mode)
                 self.scale_app(True)
                 self.scale_up = 0
@@ -155,7 +157,7 @@ class Autoscaler:
         elif value < min:
             self.cool_down += 1
             self.scale_up = 0
-            if self.cool_down > self.cool_down_factor:
+            if self.cool_down >= self.cool_down_factor:
                 self.log.info("Auto-scale triggered based on %s below the threshold" % self.trigger_mode)
                 self.scale_app(False)
                 self.cool_down = 0
