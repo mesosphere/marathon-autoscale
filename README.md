@@ -41,7 +41,7 @@ Core environment variables available to the application:
     AS_MAX_INSTANCES # max number of instances, must be greater than AS_MIN_INSTANCES
 
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
-    AS_TRIGGER_NUMBER # how many times should we pole before scaling up
+    AS_SCALE_UP_FACTOR # how many times should we poll before scaling up
     AS_INTERVAL #how often should we poll in seconds
 
 **Notes** 
