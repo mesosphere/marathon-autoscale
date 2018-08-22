@@ -31,16 +31,18 @@ Update one of the definitions in the [Marathon definitions](marathon_defs/) fold
 
 Core environment variables available to the application:
 
+    AS_DCOS_MASTER # hostname of dcos master
     AS_MARATHON_APP # app to autoscale
+
     AS_TRIGGER_MODE # scaling mode (cpu | mem | sqs)
-    AS_AUTOSCALE_MULTIPLIER # multiplier for triggered scale up or down
+
+    AS_AUTOSCALE_MULTIPLIER # The number by which current instances will be multiplied (scale-out) or divided (scale-in). This determines how many instances to add during scale-out, or remove during scale-in.
     AS_MIN_INSTANCES # min number of instances, don’t make less than 2
     AS_MAX_INSTANCES # max number of instances, must be greater than AS_MIN_INSTANCES
-    AS_DCOS_MASTER # hostname of dcos master
+
     AS_COOL_DOWN_FACTOR # how many times should we poll before scaling down
     AS_TRIGGER_NUMBER # how many times should we pole before scaling up
     AS_INTERVAL #how often should we poll in seconds
-    AS_AUTOSCALE_MULTIPLIER # The number by which current instances will be multiplied (scale-out) or divided (scale-in). This determines how many instances to add during scale-out, or remove during scale-in.
 
 **Notes** 
 
