@@ -10,9 +10,12 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    def __init__(self,  api_client=None, app_name=None, dimension=None):
+    MODE_NAME = 'SQS'
 
-        super().__init__( api_client, app_name, dimension)
+    def __init__(self, api_client=None, app=None, dimension=None):
+
+        super().__init__(api_client, app)
+        self.dimension = dimension
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
@@ -54,8 +57,17 @@ class ScaleBySQS(AbstractMode):
 
         return value
 
-    def get_min(self):
-        return self.dimension["min_range"]
+    def scale_direction(self):
+        value = self.get_value()
+        if value == -1.0:
+            return 0
 
-    def get_max(self):
-        return self.dimension["max_range"]
+        if value > self.dimension["max"]:
+            self.log.info("%s above thresholds" % self.MODE_NAME)
+            return 1
+        elif value < self.dimension["min"]:
+            self.log.info("%s below thresholds" % self.MODE_NAME)
+            return -1
+        else:
+            self.log.info("%s within thresholds" % self.MODE_NAME)
+            return 0

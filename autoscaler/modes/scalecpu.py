@@ -5,8 +5,11 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByCPU(AbstractMode):
 
-    def __init__(self, api_client=None, app_name=None, dimension=None):
-        super().__init__(api_client, app_name, dimension)
+    MODE_NAME = 'CPU'
+
+    def __init__(self, api_client=None, app=None, dimension=None):
+        super().__init__(api_client, app)
+        self.dimension = dimension
 
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
@@ -14,7 +17,7 @@ class ScaleByCPU(AbstractMode):
         app_cpu_values = []
 
         # Get a dictionary of app taskId and hostId for the marathon app
-        app_task_dict = self.get_app_details()
+        app_task_dict = self.app.get_app_details()
 
         # verify if app has any Marathon task data.
         if not app_task_dict:
@@ -34,15 +37,24 @@ class ScaleByCPU(AbstractMode):
         # Normalized data for all tasks into a single value by averaging
         value = (sum(app_cpu_values) / len(app_cpu_values))
         self.log.info("Current average CPU time for app %s = %s",
-                      self.app_name, value)
+                      self.app.app_name, value)
 
         return value
 
-    def get_min(self):
-        return self.dimension["min_range"]
+    def scale_direction(self):
+        value = self.get_value()
+        if value == -1.0:
+            return 0
 
-    def get_max(self):
-        return self.dimension["max_range"]
+        if value > self.dimension["max"]:
+            self.log.info("%s above thresholds" % self.MODE_NAME)
+            return 1
+        elif value < self.dimension["min"]:
+            self.log.info("%s below thresholds" % self.MODE_NAME)
+            return -1
+        else:
+            self.log.info("%s within thresholds" % self.MODE_NAME)
+            return 0
 
     def get_cpu_usage(self, task, agent):
         """Compute the cpu usage per task per agent"""
@@ -51,7 +63,7 @@ class ScaleByCPU(AbstractMode):
         timestamp = []
 
         for i in range(2):
-            task_stats = self.get_task_agent_stats(task, agent)
+            task_stats = self.app.get_task_agent_stats(task, agent)
             if task_stats is not None:
                 cpu_sys_time.insert(i, float(task_stats['cpus_system_time_secs']))
                 cpu_user_time.insert(i, float(task_stats['cpus_user_time_secs']))

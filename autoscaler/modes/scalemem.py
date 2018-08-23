@@ -4,15 +4,18 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByMemory(AbstractMode):
 
-    def __init__(self,  api_client=None, app_name=None, dimension=None):
-        super().__init__(api_client, app_name, dimension)
+    MODE_NAME = 'MEM'
+
+    def __init__(self, api_client=None, app=None, dimension=None):
+        super().__init__(api_client, app)
+        self.dimension = dimension
 
     def get_value(self):
 
         app_mem_values = []
 
         # Get a dictionary of app taskId and hostId for the marathon app
-        app_task_dict = self.get_app_details()
+        app_task_dict = self.app.get_app_details()
 
         # verify if app has any Marathon task data.
         if not app_task_dict:
@@ -32,18 +35,27 @@ class ScaleByMemory(AbstractMode):
         # Normalized data for all tasks into a single value by averaging
         app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
         self.log.info("Current average Memory utilization for app %s = %s",
-                      self.app_name, app_avg_mem)
+                      self.app.app_name, app_avg_mem)
 
-    def get_min(self):
-        return self.dimension["min_range"]
+    def scale_direction(self):
+        value = self.get_value()
+        if value == -1.0:
+            return 0
 
-    def get_max(self):
-        return self.dimension["max_range"]
+        if value > self.dimension["max"]:
+            self.log.info("%s above thresholds" % self.MODE_NAME)
+            return 1
+        elif value < self.dimension["min"]:
+            self.log.info("%s below thresholds" % self.MODE_NAME)
+            return -1
+        else:
+            self.log.info("%s within thresholds" % self.MODE_NAME)
+            return 0
 
     def get_mem_usage(self, task, agent):
         """Calculate memory usage for the task on the given agent
         """
-        task_stats = self.get_task_agent_stats(task, agent)
+        task_stats = self.app.get_task_agent_stats(task, agent)
 
         # RAM usage
         if task_stats is not None:
