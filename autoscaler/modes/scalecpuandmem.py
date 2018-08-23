@@ -26,9 +26,18 @@ class ScaleByCPUAndMemory(AbstractMode):
 
     def scale_direction(self):
         results = []
+        negative = False
 
         for mode in self.MODE_LIST:
             inst = self.modes[mode]
-            results.append(inst.scale_direction())
+            dir = inst.scale_direction()
+            if dir < 0:
+                negative = True
+                dir = abs(dir)
+            results.append(dir)
 
-        return operator.and_(results)
+        # perform bitwise operation on values
+        result = operator.and_(results)
+        r = result if not negative else -result
+
+        return r
