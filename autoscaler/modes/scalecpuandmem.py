@@ -29,15 +29,13 @@ class ScaleByCPUAndMemory(AbstractMode):
         negative = False
 
         for mode in self.MODE_LIST:
-            inst = self.modes[mode]
-            dir = inst.scale_direction()
-            if dir < 0:
+            d = self.modes[mode].scale_direction()
+            if d < 0:
                 negative = True
-                dir = abs(dir)
-            results.append(dir)
+                d = abs(d)
+            results.append(d)
 
-        # perform bitwise operation on values
+        # perform bitwise AND operation on values
         result = operator.and_(results)
-        r = result if not negative else -result
 
-        return r
+        return result if not negative else -result
