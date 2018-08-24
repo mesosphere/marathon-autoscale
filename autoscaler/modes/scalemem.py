@@ -4,11 +4,12 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleByMemory(AbstractMode):
 
-    MODE_NAME = 'MEM'
+    MODE_NAME = 'mem'
 
     def __init__(self, api_client=None, app=None, dimension=None):
         super().__init__(api_client, app)
         self.dimension = dimension
+        self.app = app
 
     def get_value(self):
 
@@ -36,6 +37,8 @@ class ScaleByMemory(AbstractMode):
         app_avg_mem = (sum(app_mem_values) / len(app_mem_values))
         self.log.info("Current average Memory utilization for app %s = %s",
                       self.app.app_name, app_avg_mem)
+
+        return app_avg_mem
 
     def scale_direction(self):
         value = self.get_value()

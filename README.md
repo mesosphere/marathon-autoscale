@@ -132,7 +132,7 @@ class ScaleByExample(AbstractMode):
     
 ```
 
-Once the new subclass is created, add the new mode to the MODES dictionary in the [Marathon AutoScaler](marathon_autoscaler.py).
+Once the new subclass is created, add the new mode to the MODES dictionary in [Marathon AutoScaler](marathon_autoscaler.py).
 ```
 # Dict defines the different scaling modes available to autoscaler
 MODES = {
