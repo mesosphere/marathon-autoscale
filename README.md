@@ -105,31 +105,36 @@ In this mode, the system will scale the service up or down when the Memory has b
 
 In this mode, the system will scale the service up or down when the Queue available message length has been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down). For the Amazon Web Services (AWS) Simple Queue Service (SQS) scaling mode, the queue length will be determined by the approximate number of visible messages attribute. The ApproximateNumberOfMessages attribute returns the approximate number of visible messages in a queue.
 
+#### AND
+
+In this mode, the system will only scale the service up or down when both CPU and Memory have been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down).
+
+#### OR
+
 ## Extending the auto-scaler (adding a new scaling mode)
-In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (min, max, value) of the abstract class ScaleMode.
+In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (scale_direction) of the abstract class ScaleMode.
 
 An example skeleton is below:
 ```
 class ScaleByExample(AbstractMode):
 
-    def __init__(self, api_client=None, app_name=None, dimension=None):
-        super().__init__(api_client, app_name, dimension)
+    def __init__(self, api_client=None, app=None, dimension=None):
+        super().__init__(api_client, app)
+        self.dimension = dimension
 
-    def get_value(self):
-
-    def get_min(self):
-
-    def get_max(self):
+    def scale_direction(self):
+    
 ```
 
-Once the new subclass is created, add the new mode to the MODE dictionary in autoscaler.py.
+Once the new subclass is created, add the new mode to the MODES dictionary in the [Marathon AutoScaler](marathon_autoscaler.py).
 ```
 # Dict defines the different scaling modes available to autoscaler
 MODES = {
     'sqs': ScaleBySQS,
     'cpu': ScaleByCPU,
     'mem': ScaleByMemory,
-    'example': ScaleByExample
+    'and': ScaleByCPUAndMemory,
+    'exp': ScaleByExample
 }
 ```
 

@@ -12,7 +12,8 @@ class MarathonApp:
         self.log = logging.getLogger("autoscaler")
 
     def app_exists(self):
-
+        """Determines if the application exists in Marathon
+        """
         apps = []
 
         # Query marathon for a list of its apps
@@ -34,12 +35,29 @@ class MarathonApp:
 
         return False
 
+    def get_app_instances(self):
+        """Returns the number of running tasks for a given Marathon app"""
+        app_instances = 0
+
+        response = self.api_client.dcos_rest(
+            "get",
+            self.MARATHON_APPS_URI + self.app_name
+        )
+
+        try:
+            app_instances = response['app']['instances']
+            self.log.debug("Marathon app %s has %s deployed instances",
+                           self.app_name, app_instances)
+        except KeyError:
+            self.log.error('No task data in marathon for app %s', self.app_name)
+
+        return app_instances
+
     def get_app_details(self):
         """Retrieve metadata about marathon_app
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
-
         app_task_dict = {}
 
         response = self.api_client.dcos_rest(
@@ -70,7 +88,6 @@ class MarathonApp:
         Returns:
             statistics for the specific task
         """
-
         response = self.api_client.dcos_rest(
             "get",
             '/slave/' + agent + '/monitor/statistics.json'

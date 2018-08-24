@@ -9,9 +9,13 @@ import urllib3
 
 from autoscaler.api_client import APIClient
 from autoscaler.app import MarathonApp
-from autoscaler.modes.modefactory import ModeFactory
+from autoscaler.modes.scalecpu import ScaleByCPU
+from autoscaler.modes.scalesqs import ScaleBySQS
+from autoscaler.modes.scalemem import ScaleByMemory
+from autoscaler.modes.scalecpuandmem import ScaleByCPUAndMemory
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 class Autoscaler:
     """Marathon auto scaler upon initialization, it reads a list of
@@ -23,6 +27,14 @@ class Autoscaler:
 
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
+
+    # Dictionary defines the different scaling modes available to autoscaler
+    MODES = {
+        'sqs': ScaleBySQS,
+        'cpu': ScaleByCPU,
+        'mem': ScaleByMemory,
+        'and': ScaleByCPUAndMemory
+    }
 
     def __init__(self):
         """Initialize the object with data from the command line or environment
@@ -55,13 +67,16 @@ class Autoscaler:
         )
 
         # Instantiate the scaling mode class
+        if self.MODES.get(self.trigger_mode, None) is None:
+            self.log.error("Scale mode is not found.")
+            sys.exit(1)
+
         dimension = {
             "min": args.min_range,
             "max": args.max_range
         }
 
-        self.scaling_mode = ModeFactory.create_mode(
-            mode_name=self.trigger_mode,
+        self.scaling_mode = self.MODES[self.trigger_mode](
             api_client=self.api_client,
             app=self.marathon_app,
             dimension=dimension
@@ -85,24 +100,6 @@ class Autoscaler:
         self.log.debug("Successfully completed a cycle, sleeping for %s seconds",
                        self.interval)
         time.sleep(self.interval)
-
-    def get_app_instances(self):
-
-        app_instances = 0
-
-        response = self.api_client.dcos_rest(
-            "get",
-            self.MARATHON_APPS_URI + self.marathon_app.app_name
-        )
-
-        try:
-            app_instances = response['app']['instances']
-            self.log.debug("Marathon app %s has %s deployed instances",
-                           self.marathon_app.app_name, app_instances)
-        except KeyError:
-            self.log.error('No task data in marathon for app %s', self.marathon_app.app_name)
-
-        return app_instances
 
     def autoscale(self, direction):
 
@@ -138,7 +135,7 @@ class Autoscaler:
             is_up(bool): Scale up if True, scale down if False
         """
         # get the number of instances running
-        app_instances = self.get_app_instances()
+        app_instances = self.marathon_app.get_app_instances()
 
         if is_up:
             target_instances = math.ceil(app_instances * self.autoscale_multiplier)
@@ -236,6 +233,16 @@ class Autoscaler:
             result = {'required': True}
         return result
 
+    def create_mode(self, mode_name, api_client, app, dimension):
+
+        if self.MODES.get(mode_name, None) is None:
+            self.log.error("Scale mode is not found.")
+            sys.exit(1)
+
+        mode = self.MODES[mode_name](api_client, app, dimension)
+
+        return mode
+
     def run(self):
         """Main function
         Runs the query - compute - act cycle
@@ -245,7 +252,7 @@ class Autoscaler:
 
         while True:
 
-            # test for apps existence in Marathon.
+            # Test for apps existence in Marathon
             if not self.marathon_app.app_exists():
                 self.log.error("Could not find %s in list of apps.", self.marathon_app.app_name)
                 self.timer()
