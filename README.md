@@ -116,9 +116,9 @@ In order to create a new scaling mode, you must create a new subclass in the mod
 
 Please note. The scale_direction function **MUST** return one of three values:
 
-**Scaling mode above thresholds should return 1**
-**Scaling mode within thresholds should return 0**
-**Scaling mode below thresholds should return -1**
+- **Scaling mode above thresholds should return 1**
+- **Scaling mode within thresholds should return 0**
+- **Scaling mode below thresholds should return -1**
 
 An example skeleton is below:
 ```
