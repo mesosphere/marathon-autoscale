@@ -9,24 +9,20 @@ from autoscaler.modes.scalemem import ScaleByMemory
 class ScaleByCPUAndMemory(AbstractMode):
 
     MODE_NAME = 'and'
-    MODE_LIST = ['cpu', 'mem']
-    MODES = {
-        'cpu': ScaleByCPU,
-        'mem': ScaleByMemory
-    }
 
     def __init__(self,  api_client=None, app=None, dimension=None):
         super().__init__(api_client, app)
         self.dimension = dimension
+        self.mode_map = {'cpu': ScaleByCPU, 'mem': ScaleByMemory}
 
         if len(dimension['min']) < 2 or len(dimension['max']) < 2:
             self.log.error("Scale mode AND requires two comma-delimited "
                            "values for MIN_RANGE and MAX_RANGE.")
             sys.exit(1)
 
-        self.modes = {}
-        for idx, mode in enumerate(self.MODE_LIST):
-            self.modes[mode] = self.MODES[mode](
+        # Instantiate the mode classes
+        for idx, mode in enumerate(list(self.mode_map.keys())):
+            self.mode_map[mode] = self.mode_map[mode](
                 api_client,
                 app,
                 dimension={
@@ -39,8 +35,8 @@ class ScaleByCPUAndMemory(AbstractMode):
         results = []
         negative = False
 
-        for mode in self.MODE_LIST:
-            d = self.modes[mode].scale_direction()
+        for mode in list(self.mode_map.keys()):
+            d = self.mode_map[mode].scale_direction()
             if d < 0:
                 negative = True
                 d = abs(d)

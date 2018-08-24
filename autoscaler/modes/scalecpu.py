@@ -8,9 +8,7 @@ class ScaleByCPU(AbstractMode):
     MODE_NAME = 'cpu'
 
     def __init__(self, api_client=None, app=None, dimension=None):
-        super().__init__(api_client, app)
-        self.dimension = dimension
-        self.app = app
+        super().__init__(api_client, app, dimension)
 
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
@@ -47,14 +45,17 @@ class ScaleByCPU(AbstractMode):
         if value == -1.0:
             return 0
 
-        if value > self.dimension["max"]:
-            self.log.info("%s above thresholds" % self.MODE_NAME)
+        if value > self.get_max():
+            self.log.info("%s above max threshold of %s"
+                          % (self.MODE_NAME, self.get_max()))
             return 1
-        elif value < self.dimension["min"]:
-            self.log.info("%s below thresholds" % self.MODE_NAME)
+        elif value < self.get_min():
+            self.log.info("%s below threshold of %s"
+                          % (self.MODE_NAME, self.get_min()))
             return -1
         else:
-            self.log.info("%s within thresholds" % self.MODE_NAME)
+            self.log.info("%s within thresholds (min=%s, max=%s)"
+                          % (self.MODE_NAME, self.get_min(), self.get_max()))
             return 0
 
     def get_cpu_usage(self, task, agent):

@@ -72,7 +72,7 @@ class Autoscaler:
             sys.exit(1)
 
         min = [float(i) for i in args.min_range.split(',')]
-        max = [float(i) for i in args.max_range.split(',')]
+        max = [float(i) for i in args.min_range.split(',')]
 
         dimension = {"min": min, "max": max}
 

@@ -13,9 +13,7 @@ class ScaleBySQS(AbstractMode):
     MODE_NAME = 'sqs'
 
     def __init__(self, api_client=None, app=None, dimension=None):
-
-        super().__init__(api_client, app)
-        self.dimension = dimension
+        super().__init__(api_client, app, dimension)
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
@@ -62,12 +60,15 @@ class ScaleBySQS(AbstractMode):
         if value == -1.0:
             return 0
 
-        if value > self.dimension["max"]:
-            self.log.info("%s above thresholds" % self.MODE_NAME)
+        if value > self.get_max():
+            self.log.info("%s above max threshold of %s"
+                          % (self.MODE_NAME, self.get_max()))
             return 1
-        elif value < self.dimension["min"]:
-            self.log.info("%s below thresholds" % self.MODE_NAME)
+        elif value < self.get_min():
+            self.log.info("%s below threshold of %s"
+                          % (self.MODE_NAME, self.get_min()))
             return -1
         else:
-            self.log.info("%s within thresholds" % self.MODE_NAME)
+            self.log.info("%s within thresholds (min=%s, max=%s)"
+                          % (self.MODE_NAME, self.get_min(), self.get_max()))
             return 0
