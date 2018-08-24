@@ -46,9 +46,6 @@ Core environment variables available to the application:
 
 **Notes** 
 
-For MIN_CPU_TIME and MAX_CPU_TIME on multicore containers, the calculation for determining the value is # of CPU * desired CPU utilization percentage = CPU time (e.g. 80 cpu time * 2 cpu = 160 cpu time)
-For MIN_MEM_PERCENT and MAX_MEM_PERCENT on very small containers, remember that Mesos adds 32MB to the container spec for container overhead (namespace and cgroup), so your target percentages should take that into account.  Alternatively, consider using the CPU only scaling mode for containers with very small memory footprints.
-
 If you are using an authentication:
 
     AS_USERID # username of the user or service account with access to scale the service
@@ -107,7 +104,7 @@ In this mode, the system will scale the service up or down when the Queue availa
 
 #### AND
 
-In this mode, the system will only scale the service up or down when both CPU and Memory have been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down).
+In this mode, the system will only scale the service up or down when both CPU and Memory have been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down). For the MIN_RANGE and MAX_RANGE arguments/env vars, you must pass in a comma-demited list of values. Values at index[0] will be used for CPU and values at index[1] will be used for Memory. 
 
 #### OR
 
@@ -125,8 +122,7 @@ An example skeleton is below:
 class ScaleByExample(AbstractMode):
 
     def __init__(self, api_client=None, app=None, dimension=None):
-        super().__init__(api_client, app)
-        self.dimension = dimension
+        super().__init__(api_client, app, dimension)
 
     def scale_direction(self):
     
@@ -171,3 +167,7 @@ The following examples execute the python application from the command line.
 #### Memory as autoscale trigger
 
     python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode mem --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5 --max_range 75.0
+
+#### AND (CPU and Memory) as autoscale trigger
+
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode and --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5,55.5 --max_range 75.0,75.0
