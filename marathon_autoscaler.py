@@ -71,10 +71,10 @@ class Autoscaler:
             self.log.error("Scale mode is not found.")
             sys.exit(1)
 
-        dimension = {
-            "min": args.min_range,
-            "max": args.max_range
-        }
+        min = [float(i) for i in args.min_range.split(',')]
+        max = [float(i) for i in args.max_range.split(',')]
+
+        dimension = {"min": min, "max": max}
 
         self.scaling_mode = self.MODES[self.trigger_mode](
             api_client=self.api_client,
@@ -203,11 +203,11 @@ class Autoscaler:
         parser.add_argument('--min_range',
                             help=('The minimum range of the scaling modes '
                                   'dimension.'),
-                            **self.env_or_req('AS_MIN_RANGE'), type=float)
+                            **self.env_or_req('AS_MIN_RANGE'), type=str)
         parser.add_argument('--max_range',
                             help=('The maximum range of the scaling modes '
                                   'dimension'),
-                            **self.env_or_req('AS_MAX_RANGE'), type=float)
+                            **self.env_or_req('AS_MAX_RANGE'), type=str)
         parser.add_argument('-v', '--verbose', action="store_true",
                             help='Display DEBUG messages')
 

@@ -1,4 +1,5 @@
 import operator
+import sys
 
 from autoscaler.modes.scalemode import AbstractMode
 from autoscaler.modes.scalecpu import ScaleByCPU
@@ -18,9 +19,14 @@ class ScaleByCPUAndMemory(AbstractMode):
         super().__init__(api_client, app)
         self.dimension = dimension
 
-        modes = {}
+        if len(dimension['min']) < 2 or len(dimension['max']) < 2:
+            self.log.error("Scale mode AND requires two comma-delimited "
+                           "values for MIN_RANGE and MAX_RANGE.")
+            sys.exit(1)
+
+        self.modes = {}
         for idx, mode in enumerate(self.MODE_LIST):
-            modes[mode] = self.MODES[mode](
+            self.modes[mode] = self.MODES[mode](
                 api_client,
                 app,
                 dimension={
@@ -41,6 +47,6 @@ class ScaleByCPUAndMemory(AbstractMode):
             results.append(d)
 
         # perform bitwise AND operation on values
-        result = operator.and_(results)
+        result = operator.and_(results[0], results[1])
 
         return result if not negative else -result
