@@ -34,7 +34,7 @@ Core environment variables available to the application:
     AS_DCOS_MASTER # hostname of dcos master
     AS_MARATHON_APP # app to autoscale
 
-    AS_TRIGGER_MODE # scaling mode (cpu | mem | sqs)
+    AS_TRIGGER_MODE # scaling mode (cpu | mem | sqs | and)
 
     AS_AUTOSCALE_MULTIPLIER # The number by which current instances will be multiplied (scale-out) or divided (scale-in). This determines how many instances to add during scale-out, or remove during scale-in.
     AS_MIN_INSTANCES # min number of instances, don’t make less than 2
@@ -112,7 +112,13 @@ In this mode, the system will only scale the service up or down when both CPU an
 #### OR
 
 ## Extending the auto-scaler (adding a new scaling mode)
-In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (scale_direction) of the abstract class ScaleMode.
+In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (e.g. scale_direction) of the abstract class AbstractMode [AbstractMode](autoscaler/modes/scalemode.py).
+
+Please note. The scale_direction function **MUST** return one of three values:
+
+**Scaling mode above thresholds should return 1**
+**Scaling mode within thresholds should return 0**
+**Scaling mode below thresholds should return -1**
 
 An example skeleton is below:
 ```

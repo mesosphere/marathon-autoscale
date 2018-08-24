@@ -10,7 +10,7 @@ from autoscaler.modes.scalemode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    MODE_NAME = 'SQS'
+    MODE_NAME = 'sqs'
 
     def __init__(self, api_client=None, app=None, dimension=None):
 
