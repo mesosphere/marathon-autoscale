@@ -27,12 +27,17 @@ class AbstractMode(ABC):
         self.log = logging.getLogger("autoscaler")
 
     @abstractmethod
-    def scale_direction(self):
-        pass
+    def scale_direction(self, value):
 
-    def get_min(self):
-        return self.min_range
-
-    def get_max(self):
-        return self.max_range
-
+        if value > self.max_range:
+            self.log.debug("Scaling mode above max threshold of %s"
+                           % self.max_range)
+            return 1
+        elif value < self.min_range:
+            self.log.debug("Scaling mode below threshold of %s"
+                           % self.min_range)
+            return -1
+        else:
+            self.log.debug("Scaling mode within thresholds (min=%s, max=%s)"
+                           % (self.min_range, self.max_range))
+            return 0

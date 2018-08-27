@@ -1,7 +1,7 @@
 import operator
 import sys
 
-from autoscaler.modes.scalemode import AbstractMode
+from autoscaler.modes.abstractmode import AbstractMode
 from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalemem import ScaleByMemory
 

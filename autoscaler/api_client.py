@@ -116,7 +116,6 @@ class APIClient:
                     )
 
                 self.log.debug("%s %s %s", method, path, response.status_code)
-                #self.log.debug("response: %s", response.content)
                 done = True
 
                 if response.status_code != 200:

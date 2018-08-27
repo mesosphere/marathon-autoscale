@@ -109,7 +109,7 @@ In this mode, the system will only scale the service up or down when both CPU an
 #### OR
 
 ## Extending the auto-scaler (adding a new scaling mode)
-In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (e.g. scale_direction) of the abstract class AbstractMode [AbstractMode](autoscaler/modes/scalemode.py).
+In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (e.g. scale_direction) of the abstract class AbstractMode [AbstractMode](autoscaler/modes/abstractmode.py).
 
 Please note. The scale_direction function **MUST** return one of three values:
 
