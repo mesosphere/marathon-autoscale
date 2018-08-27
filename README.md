@@ -26,8 +26,10 @@ The create_service_account.sh script takes two parameters:
 
     $ ./create-service-account.sh [service-account-name] [namespace-path]
 
-### Marathon definitions
-Update one of the definitions in the [Marathon definitions](marathon_defs/) folder to match your specific configuration. Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
+### Marathon examples
+
+#### Autoscale examples
+Update one of the definitions in the [Marathon definitions](marathon_definitions/autoscale_examples/) folder to match your specific configuration. Marathon application names must include the forward slash. This modification was made in order to handle applications within service groups. (e.g. /group/hello-dcos)
 
 Core environment variables available to the application:
 
@@ -73,6 +75,9 @@ If you are using SQS as your scaling mode:
     AS_MIN_RANGE # min number of available messages in the queue
     AS_MAX_RANGE # max number of available messages in the queue
 
+#### Target application examples
+In order to create artificial stress for an application, use one of the examples located in the [Marathon Target Application](marathon_definitions/target_app_examples/) folder.
+
 ## Program Execution / Usage
 
 Add your application to Marathon using the DC/OS Marathon CLI.
@@ -108,7 +113,7 @@ In this mode, the system will only scale the service up or down when both CPU an
 
 #### OR
 
-## Extending the auto-scaler (adding a new scaling mode)
+## Extending the autoscaler (adding a new scaling mode)
 In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (e.g. scale_direction) of the abstract class AbstractMode [AbstractMode](autoscaler/modes/abstractmode.py).
 
 Please note. The scale_direction function **MUST** return one of three values:

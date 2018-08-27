@@ -9,7 +9,7 @@ class MarathonApp:
     def __init__(self, app_name, api_client):
         self.app_name = app_name
         self.api_client = api_client
-        self.log = logging.getLogger("autoscale_examples")
+        self.log = logging.getLogger("autoscale")
 
     def app_exists(self):
         """Determines if the application exists in Marathon

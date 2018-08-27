@@ -28,7 +28,7 @@ class Autoscaler:
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
-    # Dictionary defines the different scaling modes available to autoscale_examples
+    # Dictionary defines the different scaling modes available to autoscaler
     MODES = {
         'sqs': ScaleBySQS,
         'cpu': ScaleByCPU,
@@ -93,7 +93,7 @@ class Autoscaler:
             format=self.LOGGING_FORMAT
         )
 
-        self.log = logging.getLogger("autoscale_examples")
+        self.log = logging.getLogger("autoscale")
 
     def timer(self):
         """Simple timer function"""

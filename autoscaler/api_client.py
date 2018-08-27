@@ -16,7 +16,7 @@ class APIClient:
         self.dcos_master = dcos_master
         self.dcos_headers = {}
         self.authenticate()
-        self.log = logging.getLogger("autoscale_examples")
+        self.log = logging.getLogger("autoscale")
 
     def authenticate(self):
         """Using a userid/pass or a service account secret,

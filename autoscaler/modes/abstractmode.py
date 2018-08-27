@@ -24,7 +24,7 @@ class AbstractMode(ABC):
             else:
                 self.max_range = dimension["max"]
 
-        self.log = logging.getLogger("autoscale_examples")
+        self.log = logging.getLogger("autoscale")
 
     @abstractmethod
     def scale_direction(self, value):
