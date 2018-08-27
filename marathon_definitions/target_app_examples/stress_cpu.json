@@ -1,0 +1,7 @@
+{
+  "id": "/stressCpu",
+  "instances": 1,
+  "cpus": 1.5,
+  "mem": 32,
+  "cmd": "while true; do true; done"
+}

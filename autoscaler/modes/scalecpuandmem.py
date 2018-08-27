@@ -8,8 +8,6 @@ from autoscaler.modes.scalemem import ScaleByMemory
 
 class ScaleByCPUAndMemory(AbstractMode):
 
-    MODE_NAME = 'and'
-
     def __init__(self,  api_client=None, app=None, dimension=None):
         super().__init__(api_client, app)
         self.dimension = dimension

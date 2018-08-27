@@ -1,0 +1,7 @@
+{
+  "id": "/stressMemory",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 32,
+  "cmd": "tail -f /dev/null;"
+}

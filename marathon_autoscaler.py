@@ -28,7 +28,7 @@ class Autoscaler:
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
-    # Dictionary defines the different scaling modes available to autoscaler
+    # Dictionary defines the different scaling modes available to autoscale_examples
     MODES = {
         'sqs': ScaleBySQS,
         'cpu': ScaleByCPU,
@@ -93,7 +93,7 @@ class Autoscaler:
             format=self.LOGGING_FORMAT
         )
 
-        self.log = logging.getLogger("autoscaler")
+        self.log = logging.getLogger("autoscale_examples")
 
     def timer(self):
         """Simple timer function"""
@@ -165,7 +165,7 @@ class Autoscaler:
         """Set up an argument parser
         Override values of command line arguments with environment variables.
         """
-        parser = argparse.ArgumentParser(description='Marathon autoscaler app.')
+        parser = argparse.ArgumentParser(description='Marathon autoscale_examples app.')
         parser.set_defaults()
         parser.add_argument('--dcos-master',
                             help=('The DNS hostname or IP of your Marathon'
