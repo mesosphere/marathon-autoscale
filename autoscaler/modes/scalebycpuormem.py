@@ -1,12 +1,13 @@
-import operator
 import sys
+import operator
+
 
 from autoscaler.modes.abstractmode import AbstractMode
 from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalemem import ScaleByMemory
 
 
-class ScaleByCPUAndMemory(AbstractMode):
+class ScaleByCPUOrMemory(AbstractMode):
 
     def __init__(self,  api_client=None, app=None, dimension=None):
         super().__init__(api_client, app)
@@ -31,35 +32,14 @@ class ScaleByCPUAndMemory(AbstractMode):
 
     def scale_direction(self):
         """
-        Performs a bitwise AND on the returned direction for CPU (x)
-        and Memory (y). Take the absolute value of the direction, then
-        perform the bitwise AND calculation. If (x = y = 1), return 1,
-        otherwise return 0. Sign will be flipped based on scale direction.
+        Performs a bitwise OR on the returned direction from CPU (x)
+        and Memory (y). If (x = y = 0), return 0, otherwise
+        return -1 or 1. If (x = -1, y = 1), return -1.
         """
         results = []
-        negative = False
-
-        for mode in list(self.mode_map.keys()):
-            d = self.mode_map[mode].scale_direction()
-            if d < 0:
-                negative = True
-                d = abs(d)
-            results.append(d)
 
         for mode in list(self.mode_map.keys()):
             results.append(self.mode_map[mode].scale_direction())
 
-        if results[0] == results[1]:
-            return results[0]
-        else:
-            return 0
-
-            if d < 0:
-                negative = True
-                d = abs(d)
-            results.append(d)
-
-        # perform bitwise AND operation on values
-        result = operator.and_(results[0], results[1])
-
-        return result if not negative else -result
+        # perform bitwise OR operation on CPU and Memory direction
+        return operator.or_(results[0], results[1])

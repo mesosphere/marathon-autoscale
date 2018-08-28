@@ -13,6 +13,7 @@ from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalesqs import ScaleBySQS
 from autoscaler.modes.scalemem import ScaleByMemory
 from autoscaler.modes.scalecpuandmem import ScaleByCPUAndMemory
+from autoscaler.modes.scalebycpuormem import ScaleByCPUOrMemory
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -33,7 +34,8 @@ class Autoscaler:
         'sqs': ScaleBySQS,
         'cpu': ScaleByCPU,
         'mem': ScaleByMemory,
-        'and': ScaleByCPUAndMemory
+        'and': ScaleByCPUAndMemory,
+        'or': ScaleByCPUOrMemory
     }
 
     def __init__(self):
@@ -102,6 +104,10 @@ class Autoscaler:
         time.sleep(self.interval)
 
     def autoscale(self, direction):
+        """ Determine if scaling mode direction is below or above scaling
+        factor. If scale_up/cool_down cycle count exceeds scaling
+        factor threshold, autoscale (up/down) will be triggered.
+        """
 
         if direction == 1:
             self.scale_up += 1
@@ -232,16 +238,6 @@ class Autoscaler:
         else:
             result = {'required': True}
         return result
-
-    def create_mode(self, mode_name, api_client, app, dimension):
-
-        if self.MODES.get(mode_name, None) is None:
-            self.log.error("Scale mode is not found.")
-            sys.exit(1)
-
-        mode = self.MODES[mode_name](api_client, app, dimension)
-
-        return mode
 
     def run(self):
         """Main function

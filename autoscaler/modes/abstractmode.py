@@ -28,7 +28,11 @@ class AbstractMode(ABC):
 
     @abstractmethod
     def scale_direction(self, value):
-
+        """
+        Returns (-1, 0, 1) based on whether the incoming value
+        is below (-1), within (0), or above (1) the threshold of
+        the scaling mode.
+        """
         if value > self.max_range:
             self.log.debug("Scaling mode above max threshold of %s"
                            % self.max_range)
