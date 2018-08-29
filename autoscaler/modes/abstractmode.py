@@ -38,7 +38,7 @@ class AbstractMode(ABC):
                            % self.max_range)
             return 1
         elif value < self.min_range:
-            self.log.debug("Scaling mode below threshold of %s"
+            self.log.debug("Scaling mode below min threshold of %s"
                            % self.min_range)
             return -1
         else:

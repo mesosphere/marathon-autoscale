@@ -42,6 +42,8 @@ class ScaleByCPUAndMemory(AbstractMode):
         except ValueError:
             raise
 
+        self.log.info("CPU direction = %s, Memory direction = %s",
+                      results[0], results[1])
         if results[0] == results[1]:
             return results[0]
         else:

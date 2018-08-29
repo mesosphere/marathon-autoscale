@@ -170,12 +170,16 @@ The following examples execute the python application from the command line.
 
 #### CPU as autoscale trigger
 
-    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode cpu --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5 --max_range 80.0
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode cpu --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0 --max_range 80.0
 
 #### Memory as autoscale trigger
 
-    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode mem --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5 --max_range 75.0
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode mem --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0 --max_range 75.0
 
 #### AND (CPU and Memory) as autoscale trigger
 
-    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode and --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.5,55.5 --max_range 75.0,75.0
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode and --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0,40.0 --max_range 75.0,60.0
+
+#### OR (CPU and Memory) as autoscale trigger
+
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode or --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0,55.0 --max_range 75.0,75.0

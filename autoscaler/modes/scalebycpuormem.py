@@ -44,5 +44,8 @@ class ScaleByCPUOrMemory(AbstractMode):
         except ValueError:
             raise
 
+        self.log.info("CPU direction = %s, Memory direction = %s",
+                      results[0], results[1])
+
         # perform bitwise OR operation on CPU and Memory direction
         return operator.or_(results[0], results[1])
