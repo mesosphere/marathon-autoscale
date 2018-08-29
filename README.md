@@ -67,8 +67,7 @@ If you are using Memory as your scaling mode:
 
 If you are using SQS as your scaling mode:
 
-    AS_SQS_NAME # name of the aws simple queue service
-    AS_SQS_ENDPOINT # endpoint url of the sqs service
+    AS_QUEUE_URL # full URL of the SQS queue
     AWS_ACCESS_KEY_ID # aws access key
     AWS_SECRET_ACCESS_KEY # aws secret key
     AWS_DEFAULT_REGION # aws region
@@ -160,8 +159,7 @@ The following examples execute the python application from the command line.
 
 #### SQS message queue length as autoscale trigger
 
-    export AS_SQS_NAME=testQueue
-    export AS_SQS_ENDPOINT=https://sqs.us-east-1.amazonaws.com
+    export AS_QUEUE_URL=
     export AWS_ACCESS_KEY_ID=
     export AWS_SECRET_ACCESS_KEY=
     export AWS_DEFAULT_REGION=us-east-1
@@ -180,6 +178,6 @@ The following examples execute the python application from the command line.
 
     python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode and --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0,40.0 --max_range 75.0,60.0
 
-#### OR (CPU and Memory) as autoscale trigger
+#### OR (CPU or Memory) as autoscale trigger
 
     python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode or --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /group1/testapp --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0,55.0 --max_range 75.0,75.0

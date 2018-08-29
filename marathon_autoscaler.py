@@ -106,7 +106,7 @@ class Autoscaler:
     def autoscale(self, direction):
         """ Determine if scaling mode direction is below or above scaling
         factor. If scale_up/cool_down cycle count exceeds scaling
-        factor threshold, autoscale (up/down) will be triggered.
+        factor, autoscale (up/down) will be triggered.
         """
 
         if direction == 1:
@@ -241,7 +241,6 @@ class Autoscaler:
 
     def run(self):
         """Main function
-        Runs the query - compute - act cycle
         """
         self.cool_down = 0
         self.scale_up = 0

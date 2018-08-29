@@ -3,5 +3,5 @@
   "instances": 1,
   "cpus": 0.1,
   "mem": 16,
-  "cmd": "tail -f /dev/null;"
+  "cmd": "for i in $(seq 5); do BLOB=$(dd if=/dev/urandom bs=1k count=1024k); sleep 10s; done"
 }
