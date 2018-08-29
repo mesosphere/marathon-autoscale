@@ -1,7 +1,7 @@
 {
-  "id": "/autoscaler",
+  "id": "/autoscaler/cpu",
   "instances": 1,
-  "cpus": 1,
+  "cpus": 0.1,
   "mem": 128,
   "disk": 0,
   "gpus": 0,
@@ -15,7 +15,7 @@
     "type": "DOCKER",
     "volumes": [],
     "docker": {
-      "image": "adamiezzi/autoscaler",
+      "image": "adamiezzi/marathon-autoscale",
       "portMappings": [],
       "privileged": false,
       "parameters": [],
@@ -37,25 +37,16 @@
   "portDefinitions": [],
   "requirePorts": false,
   "env": {
-    "AS_TRIGGER_MODE": "sqs",
+    "AS_TRIGGER_MODE": "cpu",
     "AS_MIN_INSTANCES": "2",
     "AS_COOL_DOWN_FACTOR": "4",
     "AS_MAX_INSTANCES": "6",
-    "AS_DCOS_MASTER": "CHANGEME",
-    "AS_MAX_CPU_TIME": "80",
-    "AS_MIN_CPU_TIME": "55",
-    "AS_MAX_MEM_PERCENT": "80",
-    "AS_MIN_MEM_PERCENT": "45",
+    "AS_DCOS_MASTER": "https://leader.mesos",
+    "AS_MAX_RANGE": "80",
+    "AS_MIN_RANGE": "55",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
     "AS_TRIGGER_NUMBER": "3",
-    "AS_MARATHON_APP": "/hello-dcos",
-    "AS_INTERVAL": "10",
-    "AS_SQS_NAME": "testQueue",
-    "AS_SQS_ENDPOINT": "https://sqs.us-east-1.amazonaws.com",
-    "AS_MIN_SQS_LENGTH": "3",
-    "AS_MAX_SQS_LENGTH": "10",
-    "AWS_DEFAULT_REGION": "us-east-1",
-    "AWS_ACCESS_KEY_ID": "CHANGEME",
-    "AWS_SECRET_ACCESS_KEY": "CHANGEME"
+    "AS_MARATHON_APP": "tweeter",
+    "AS_INTERVAL": "30"
   }
 }

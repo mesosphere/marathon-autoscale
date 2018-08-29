@@ -1,0 +1,46 @@
+{
+  "id": "/test/stress-sqs",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 128,
+  "disk": 0,
+  "gpus": 0,
+  "constraints": [],
+  "fetch": [],
+  "storeUrls": [],
+  "backoffSeconds": 1,
+  "backoffFactor": 1.15,
+  "maxLaunchDelaySeconds": 3600,
+  "container": {
+    "type": "DOCKER",
+    "volumes": [],
+    "docker": {
+      "image": "adamiezzi/stress-sqs:latest",
+      "portMappings": [],
+      "privileged": false,
+      "parameters": [],
+      "forcePullImage": true
+    }
+  },
+  "healthChecks": [],
+  "readinessChecks": [],
+  "dependencies": [],
+  "upgradeStrategy": {
+    "minimumHealthCapacity": 1,
+    "maximumOverCapacity": 1
+  },
+  "unreachableStrategy": {
+    "inactiveAfterSeconds": 300,
+    "expungeAfterSeconds": 600
+  },
+  "killSelection": "YOUNGEST_FIRST",
+  "portDefinitions": [],
+  "requirePorts": false,
+  "env": {
+    "INTERVAL": "10",
+    "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/test-auto-scale",
+    "AWS_DEFAULT_REGION": "us-east-1",
+    "AWS_ACCESS_KEY_ID": "CHANGEME",
+    "AWS_SECRET_ACCESS_KEY": "CHANGEME"
+  }
+}
