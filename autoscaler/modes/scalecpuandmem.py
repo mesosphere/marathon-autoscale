@@ -31,35 +31,19 @@ class ScaleByCPUAndMemory(AbstractMode):
 
     def scale_direction(self):
         """
-        Performs a bitwise AND on the returned direction for CPU (x)
-        and Memory (y). Take the absolute value of the direction, then
-        perform the bitwise AND calculation. If (x = y = 1), return 1,
-        otherwise return 0. Sign will be flipped based on scale direction.
+        Test CPU (x) and Memory (y) direction for equality.
+        If (x = y), return x, otherwise return 0.
         """
         results = []
-        negative = False
 
-        for mode in list(self.mode_map.keys()):
-            d = self.mode_map[mode].scale_direction()
-            if d < 0:
-                negative = True
-                d = abs(d)
-            results.append(d)
-
-        for mode in list(self.mode_map.keys()):
-            results.append(self.mode_map[mode].scale_direction())
+        try:
+            for mode in list(self.mode_map.keys()):
+                results.append(self.mode_map[mode].scale_direction())
+        except ValueError:
+            raise
 
         if results[0] == results[1]:
             return results[0]
         else:
             return 0
 
-            if d < 0:
-                negative = True
-                d = abs(d)
-            results.append(d)
-
-        # perform bitwise AND operation on values
-        result = operator.and_(results[0], results[1])
-
-        return result if not negative else -result

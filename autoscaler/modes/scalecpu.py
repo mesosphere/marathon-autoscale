@@ -18,18 +18,19 @@ class ScaleByCPU(AbstractMode):
 
         # verify if app has any Marathon task data.
         if not app_task_dict:
-            return -1.0
+            raise ValueError("No marathon app task data found for app %s" % self.app.app_name)
 
-        for task, agent in app_task_dict.items():
-            self.log.info("Inspecting task %s on agent %s", task, agent)
+        try:
 
-            # CPU usage
-            cpu_usage = self.get_cpu_usage(task, agent)
+            for task, agent in app_task_dict.items():
+                self.log.info("Inspecting task %s on agent %s", task, agent)
 
-            if cpu_usage == -1.0:
-                return -1.0
+                # CPU usage
+                cpu_usage = self.get_cpu_usage(task, agent)
+                app_cpu_values.append(cpu_usage)
 
-            app_cpu_values.append(cpu_usage)
+        except ValueError:
+            raise
 
         # Normalized data for all tasks into a single value by averaging
         value = (sum(app_cpu_values) / len(app_cpu_values))
@@ -39,11 +40,15 @@ class ScaleByCPU(AbstractMode):
         return value
 
     def scale_direction(self):
-        value = self.get_value()
-        if value == -1.0:
-            return 0
 
-        return super().scale_direction(value)
+        try:
+            value = self.get_value()
+            self.log.debug("CPU value = %s", value)
+
+            return super().scale_direction(value)
+
+        except ValueError:
+            raise
 
     def get_cpu_usage(self, task, agent):
         """Compute the cpu usage per task per agent"""
@@ -68,8 +73,7 @@ class ScaleByCPU(AbstractMode):
 
         # CPU percentage usage
         if timestamp_delta == 0:
-            self.log.error("timestamp_delta for task %s agent %s is 0", task, agent)
-            return -1.0
+            raise ValueError("timestamp_delta for task {} agent {} is 0".format(task, agent))
 
         cpu_usage = float(cpu_time_delta / timestamp_delta) * 100
 

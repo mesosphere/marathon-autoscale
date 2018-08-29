@@ -1,7 +1,7 @@
 {
-  "id": "/stressMemory",
+  "id": "/test/stress-memory",
   "instances": 1,
   "cpus": 0.1,
-  "mem": 32,
+  "mem": 16,
   "cmd": "tail -f /dev/null;"
 }

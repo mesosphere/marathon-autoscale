@@ -38,8 +38,11 @@ class ScaleByCPUOrMemory(AbstractMode):
         """
         results = []
 
-        for mode in list(self.mode_map.keys()):
-            results.append(self.mode_map[mode].scale_direction())
+        try:
+            for mode in list(self.mode_map.keys()):
+                results.append(self.mode_map[mode].scale_direction())
+        except ValueError:
+            raise
 
         # perform bitwise OR operation on CPU and Memory direction
         return operator.or_(results[0], results[1])

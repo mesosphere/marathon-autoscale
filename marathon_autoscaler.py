@@ -19,10 +19,10 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Autoscaler:
-    """Marathon auto scaler upon initialization, it reads a list of
+    """Marathon autoscaler upon initialization, it reads a list of
     command line parameters or env variables. Then it logs in to DCOS
-    and starts querying metrics relevant to the scaling
-    objective (cpu, mem, sqs). Scaling can happen by cpu, mem,
+    and starts querying metrics relevant to the scaling objective
+    (cpu, mem, sqs, and, or). Scaling can happen by cpu, mem,
     or sqs. The checks are performed on a configurable interval.
     """
 
@@ -59,6 +59,19 @@ class Autoscaler:
         self.interval = args.interval
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
 
+        # Start logging
+        if self.verbose:
+            level = logging.DEBUG
+        else:
+            level = logging.INFO
+
+        logging.basicConfig(
+            level=level,
+            format=self.LOGGING_FORMAT
+        )
+
+        self.log = logging.getLogger("autoscale")
+
         # Initialize marathon client for auth requests
         self.api_client = APIClient(self.dcos_master)
 
@@ -83,19 +96,6 @@ class Autoscaler:
             app=self.marathon_app,
             dimension=dimension
         )
-
-        # Start logging
-        if self.verbose:
-            level = logging.DEBUG
-        else:
-            level = logging.INFO
-
-        logging.basicConfig(
-            level=level,
-            format=self.LOGGING_FORMAT
-        )
-
-        self.log = logging.getLogger("autoscale")
 
     def timer(self):
         """Simple timer function"""
@@ -248,18 +248,26 @@ class Autoscaler:
 
         while True:
 
-            # Test for apps existence in Marathon
-            if not self.marathon_app.app_exists():
-                self.log.error("Could not find %s in list of apps.", self.marathon_app.app_name)
+            try:
+
+                # Test for apps existence in Marathon
+                if not self.marathon_app.app_exists():
+                    self.log.error("Could not find %s in list of apps.", self.marathon_app.app_name)
+                    self.timer()
+                    continue
+
+                # Get the mode scaling direction
+                direction = self.scaling_mode.scale_direction()
+                self.log.debug("scaling mode direction = %s", direction)
+
+                # Evaluate whether to auto-scale
+                self.autoscale(direction)
+                self.timer()
+
+            except ValueError as error:
+                self.log.error(error)
                 self.timer()
                 continue
-
-            # Get the mode scaling direction
-            direction = self.scaling_mode.scale_direction()
-
-            # Evaluate whether to auto-scale
-            self.autoscale(direction)
-            self.timer()
 
 
 if __name__ == "__main__":

@@ -45,8 +45,7 @@ class ScaleBySQS(AbstractMode):
             queue = sqs.get_queue_by_name(QueueName=queue_name)
             value = float(queue.attributes.get('ApproximateNumberOfMessages'))
         except ClientError as e:
-            self.log.error("Boto3 client error: %s", e.response)
-            return -1.0
+            raise ValueError("Boto3 client error: %s", e.response)
 
         self.log.info("Current available messages for queue %s = %s",
                       queue_name, value)
@@ -54,8 +53,11 @@ class ScaleBySQS(AbstractMode):
         return value
 
     def scale_direction(self):
-        value = self.get_value()
-        if value == -1.0:
-            return 0
 
-        return super().scale_direction(value)
+        try:
+            value = self.get_value()
+            self.log.debug("SQS value = %s", value)
+
+            return super().scale_direction(value)
+        except ValueError:
+            raise

@@ -113,6 +113,8 @@ In this mode, the system will only scale the service up or down when both CPU an
 
 #### OR
 
+In this mode, the system will only scale the service up or down when either CPU or Memory have been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down). For the MIN_RANGE and MAX_RANGE arguments/env vars, you must pass in a comma-delimited list of values. Values at index[0] will be used for CPU range and values at index[1] will be used for Memory range.
+
 ## Extending the autoscaler (adding a new scaling mode)
 In order to create a new scaling mode, you must create a new subclass in the modes directory/module and implement all abstract methods (e.g. scale_direction) of the abstract class AbstractMode [AbstractMode](autoscaler/modes/abstractmode.py).
 
@@ -141,6 +143,7 @@ MODES = {
     'cpu': ScaleByCPU,
     'mem': ScaleByMemory,
     'and': ScaleByCPUAndMemory,
+    'or': ScaleByCPUOrMemory,
     'exp': ScaleByExample
 }
 ```
