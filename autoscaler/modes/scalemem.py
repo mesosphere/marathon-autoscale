@@ -42,8 +42,6 @@ class ScaleByMemory(AbstractMode):
 
         try:
             value = self.get_value()
-            self.log.debug("Memory value = %s", value)
-
             return super().scale_direction(value)
         except ValueError:
             raise

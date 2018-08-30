@@ -10,8 +10,8 @@ class AbstractMode(ABC):
 
         self.api_client = api_client
         self.app = app
-        self.min_range = 0
-        self.max_range = 1
+        self.min_range = 0.0
+        self.max_range = 100.0
 
         if dimension is not None:
             if isinstance(dimension["min"], list):

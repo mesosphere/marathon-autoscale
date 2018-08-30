@@ -43,10 +43,7 @@ class ScaleByCPU(AbstractMode):
 
         try:
             value = self.get_value()
-            self.log.debug("CPU value = %s", value)
-
             return super().scale_direction(value)
-
         except ValueError:
             raise
 

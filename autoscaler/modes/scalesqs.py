@@ -52,8 +52,6 @@ class ScaleBySQS(AbstractMode):
 
         try:
             value = self.get_value()
-            self.log.debug("SQS value = %s", value)
-
             return super().scale_direction(value)
         except ValueError:
             raise
