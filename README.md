@@ -36,7 +36,7 @@ Core environment variables available to the application:
     AS_DCOS_MASTER # hostname of dcos master
     AS_MARATHON_APP # app to autoscale
 
-    AS_TRIGGER_MODE # scaling mode (cpu | mem | sqs | and)
+    AS_TRIGGER_MODE # scaling mode (cpu | mem | sqs | and | or)
 
     AS_AUTOSCALE_MULTIPLIER # The number by which current instances will be multiplied (scale-out) or divided (scale-in). This determines how many instances to add during scale-out, or remove during scale-in.
     AS_MIN_INSTANCES # min number of instances, don’t make less than 2
@@ -63,7 +63,17 @@ If you are using CPU as your scaling mode:
 If you are using Memory as your scaling mode:
 
     AS_MAX_RANGE # max avg mem utilization percent as float, e.g. 75 or 75.0
-    AS_MIN_RANGE # min avg men utilization percent as float, e.g. 55 or 55.0
+    AS_MIN_RANGE # min avg mem utilization percent as float, e.g. 55 or 55.0
+    
+If you are using AND (CPU and Memory) as your scaling mode:
+
+    AS_MAX_RANGE # [max average cpu time, max avg mem utilization percent], e.g. 75.0,80.0
+    AS_MIN_RANGE # [min average cpu time, min avg men utilization percent], e.g. 55.0,55.0
+    
+If you are using OR (CPU or Memory) as your scaling mode:
+
+    AS_MAX_RANGE # [max average cpu time, max avg mem utilization percent], e.g. 75.0,80.0
+    AS_MIN_RANGE # [min average cpu time, min avg men utilization percent], e.g. 55.0,55.0
 
 If you are using SQS as your scaling mode:
 
