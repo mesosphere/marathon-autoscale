@@ -11,11 +11,10 @@ class ScaleByCPUOrMemory(AbstractMode):
 
     def __init__(self,  api_client=None, app=None, dimension=None):
         super().__init__(api_client, app)
-        self.dimension = dimension
         self.mode_map = {'cpu': ScaleByCPU, 'mem': ScaleByMemory}
 
         if len(dimension['min']) < 2 or len(dimension['max']) < 2:
-            self.log.error("Scale mode AND requires two comma-delimited "
+            self.log.error("Scale mode OR requires two comma-delimited "
                            "values for MIN_RANGE and MAX_RANGE.")
             sys.exit(1)
 

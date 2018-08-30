@@ -1,4 +1,3 @@
-import operator
 import sys
 
 from autoscaler.modes.abstractmode import AbstractMode
@@ -10,7 +9,6 @@ class ScaleByCPUAndMemory(AbstractMode):
 
     def __init__(self,  api_client=None, app=None, dimension=None):
         super().__init__(api_client, app)
-        self.dimension = dimension
         self.mode_map = {'cpu': ScaleByCPU, 'mem': ScaleByMemory}
 
         if len(dimension['min']) < 2 or len(dimension['max']) < 2:
