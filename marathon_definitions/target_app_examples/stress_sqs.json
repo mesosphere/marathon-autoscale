@@ -38,7 +38,7 @@
   "requirePorts": false,
   "env": {
     "INTERVAL": "10",
-    "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/ACCOUNT_ID/test-auto-scale",
+    "QUEUE_URL": "CHANGEME",
     "AWS_DEFAULT_REGION": "us-east-1",
     "AWS_ACCESS_KEY_ID": "CHANGEME",
     "AWS_SECRET_ACCESS_KEY": "CHANGEME"
