@@ -178,15 +178,15 @@ The following examples execute the python application from the command line.
     export AWS_SECRET_ACCESS_KEY=
     export AWS_DEFAULT_REGION=us-east-1
 
-    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode sqs --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /test/stress-cpu --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 2.0 --max_range 10.0
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode sqs --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /test/stress-sqs --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 2.0 --max_range 10.0
 
 #### CPU as autoscale trigger
 
-    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode cpu --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /test/stress-memory --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0 --max_range 80.0
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode cpu --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /test/stress-cpu --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0 --max_range 80.0
 
 #### Memory as autoscale trigger
 
-    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode mem --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /test/stress-sqs --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0 --max_range 75.0
+    python marathon_autoscaler.py --dcos-master https://leader.mesos --trigger_mode mem --autoscale_multiplier 1.5 --max_instances 5 --marathon-app /test/stress-memory --min_instances 1 --cool_down_factor 4 --scale_up_factor 3 --interval 10 --min_range 55.0 --max_range 75.0
 
 #### AND (CPU and Memory) as autoscale trigger
 
