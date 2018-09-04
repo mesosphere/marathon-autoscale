@@ -132,6 +132,7 @@ class Autoscaler:
                               "Consecutive cycles = %s, Cool-down factor = %s" %
                               (self.trigger_mode, self.cool_down, self.cool_down_factor))
         else:
+            self.log.info("%s within thresholds" % self.trigger_mode)
             self.scale_up = 0
             self.cool_down = 0
 
