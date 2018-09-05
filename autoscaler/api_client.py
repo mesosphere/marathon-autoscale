@@ -16,7 +16,7 @@ class APIClient:
         self.dcos_master = dcos_master
         self.dcos_headers = {}
         self.authenticate()
-        self.log = logging.getLogger("autoscaler")
+        self.log = logging.getLogger("autoscale")
 
     def authenticate(self):
         """Using a userid/pass or a service account secret,
@@ -116,7 +116,6 @@ class APIClient:
                     )
 
                 self.log.debug("%s %s %s", method, path, response.status_code)
-                #self.log.debug("response: %s", response.content)
                 done = True
 
                 if response.status_code != 200:

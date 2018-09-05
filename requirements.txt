@@ -1,5 +1,6 @@
 requests
 PyJWT
 cryptography
+urllib3
 boto3
 botocore

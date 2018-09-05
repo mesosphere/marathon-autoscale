@@ -1,42 +1,68 @@
-from abc import ABC, abstractmethod
+import sys
 import logging
 
 
-class AbstractMode(ABC):
+class MarathonApp:
 
-    def __init__(self, api_client=None, app_name=None, dimension=None):
+    MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
-        super().__init__()
-
-        self.api_client = api_client
+    def __init__(self, app_name, api_client):
         self.app_name = app_name
-        self.dimension = dimension
+        self.api_client = api_client
+        self.log = logging.getLogger("autoscale")
 
-        self.log = logging.getLogger("autoscaler")
+    def app_exists(self):
+        """Determines if the application exists in Marathon
+        """
+        apps = []
 
-    @abstractmethod
-    def get_min(self):
-        pass
+        # Query marathon for a list of its apps
+        response = self.api_client.dcos_rest(
+            "get",
+            self.MARATHON_APPS_URI
+        )
 
-    @abstractmethod
-    def get_max(self):
-        pass
+        try:
+            for i in response['apps']:
+                appid = i['id']
+                apps.append(appid)
+            # test for apps existence in Marathon
+            if self.app_name in apps:
+                return True
+        except KeyError:
+            self.log.error("Error: KeyError when testing for apps existence")
+            sys.exit(1)
 
-    @abstractmethod
-    def get_value(self):
-        pass
+        return False
+
+    def get_app_instances(self):
+        """Returns the number of running tasks for a given Marathon app"""
+        app_instances = 0
+
+        response = self.api_client.dcos_rest(
+            "get",
+            self.MARATHON_APPS_URI + self.app_name
+        )
+
+        try:
+            app_instances = response['app']['instances']
+            self.log.debug("Marathon app %s has %s deployed instances",
+                           self.app_name, app_instances)
+        except KeyError:
+            self.log.error('No task data in marathon for app %s', self.app_name)
+
+        return app_instances
 
     def get_app_details(self):
         """Retrieve metadata about marathon_app
         Returns:
             Dictionary of task_id mapped to mesos slave_id
         """
-
         app_task_dict = {}
 
         response = self.api_client.dcos_rest(
             "get",
-            '/service/marathon/v2/apps/' + self.app_name
+            self.MARATHON_APPS_URI + self.app_name
         )
 
         try:
@@ -62,7 +88,6 @@ class AbstractMode(ABC):
         Returns:
             statistics for the specific task
         """
-
         response = self.api_client.dcos_rest(
             "get",
             '/slave/' + agent + '/monitor/statistics.json'

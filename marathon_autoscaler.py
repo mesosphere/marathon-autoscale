@@ -8,28 +8,34 @@ import argparse
 import urllib3
 
 from autoscaler.api_client import APIClient
+from autoscaler.app import MarathonApp
 from autoscaler.modes.scalecpu import ScaleByCPU
 from autoscaler.modes.scalesqs import ScaleBySQS
 from autoscaler.modes.scalemem import ScaleByMemory
+from autoscaler.modes.scalecpuandmem import ScaleByCPUAndMemory
+from autoscaler.modes.scalebycpuormem import ScaleByCPUOrMemory
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+
 class Autoscaler:
-    """Marathon auto scaler upon initialization, it reads a list of
+    """Marathon autoscaler upon initialization, it reads a list of
     command line parameters or env variables. Then it logs in to DCOS
-    and starts querying metrics relevant to the scaling
-    objective (cpu, mem, sqs). Scaling can happen by cpu, mem,
+    and starts querying metrics relevant to the scaling objective
+    (cpu, mem, sqs, and, or). Scaling can happen by cpu, mem,
     or sqs. The checks are performed on a configurable interval.
     """
 
     LOGGING_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     MARATHON_APPS_URI = '/service/marathon/v2/apps'
 
-    # Dict defines the different scaling autoscaler available to autoscaler
+    # Dictionary defines the different scaling modes available to autoscaler
     MODES = {
         'sqs': ScaleBySQS,
         'cpu': ScaleByCPU,
-        'mem': ScaleByMemory
+        'mem': ScaleByMemory,
+        'and': ScaleByCPUAndMemory,
+        'or': ScaleByCPUOrMemory
     }
 
     def __init__(self):
@@ -40,38 +46,18 @@ class Autoscaler:
 
         self.scale_up = 0
         self.cool_down = 0
-        mode_dimension = {}
 
         args = self.parse_arguments()
 
         self.dcos_master = args.dcos_master
         self.trigger_mode = args.trigger_mode
         self.autoscale_multiplier = float(args.autoscale_multiplier)
-        self.marathon_app = args.marathon_app
         self.min_instances = int(args.min_instances)
         self.max_instances = int(args.max_instances)
         self.cool_down_factor = int(args.cool_down_factor)
         self.scale_up_factor = int(args.scale_up_factor)
         self.interval = args.interval
-        mode_dimension["min_range"] = args.min_range
-        mode_dimension["max_range"] = args.max_range
         self.verbose = args.verbose or os.environ.get("AS_VERBOSE")
-
-        # Initialize marathon client for auth requests
-        self.api_client = APIClient(self.dcos_master)
-
-        # get the scaling mode subclass based on env vars
-        mode = self.MODES.get(self.trigger_mode, None)
-        if mode is None:
-            self.log.error("Scale mode is not found.")
-            sys.exit(1)
-
-        # Instantiate the scaling mode class
-        self.scaling_mode = mode(
-            api_client=self.api_client,
-            app_name=self.marathon_app,
-            dimension=mode_dimension
-        )
 
         # Start logging
         if self.verbose:
@@ -84,7 +70,32 @@ class Autoscaler:
             format=self.LOGGING_FORMAT
         )
 
-        self.log = logging.getLogger("autoscaler")
+        self.log = logging.getLogger("autoscale")
+
+        # Initialize marathon client for auth requests
+        self.api_client = APIClient(self.dcos_master)
+
+        # Instantiate the Marathon app class
+        self.marathon_app = MarathonApp(
+            app_name=args.marathon_app,
+            api_client=self.api_client
+        )
+
+        # Instantiate the scaling mode class
+        if self.MODES.get(self.trigger_mode, None) is None:
+            self.log.error("Scale mode is not found.")
+            sys.exit(1)
+
+        min = [float(i) for i in args.min_range.split(',')]
+        max = [float(i) for i in args.max_range.split(',')]
+
+        dimension = {"min": min, "max": max}
+
+        self.scaling_mode = self.MODES[self.trigger_mode](
+            api_client=self.api_client,
+            app=self.marathon_app,
+            dimension=dimension
+        )
 
     def timer(self):
         """Simple timer function"""
@@ -92,58 +103,13 @@ class Autoscaler:
                        self.interval)
         time.sleep(self.interval)
 
-    def get_app_instances(self):
+    def autoscale(self, direction):
+        """ Determine if scaling mode direction is below or above scaling
+        factor. If scale_up/cool_down cycle count exceeds scaling
+        factor, autoscale (up/down) will be triggered.
+        """
 
-        app_instances = 0
-
-        response = self.api_client.dcos_rest(
-            "get",
-            self.MARATHON_APPS_URI + self.marathon_app
-        )
-
-        try:
-            app_instances = response['app']['instances']
-            self.log.debug("Marathon app %s has %s deployed instances",
-                           self.marathon_app, app_instances)
-        except KeyError:
-            self.log.error('No task data in marathon for app %s', self.marathon_app)
-
-        return app_instances
-
-    def app_exists(self):
-
-        apps = []
-
-        # Query marathon for a list of its apps
-        response = self.api_client.dcos_rest(
-            "get",
-            self.MARATHON_APPS_URI
-        )
-
-        try:
-            for i in response['apps']:
-                appid = i['id']
-                apps.append(appid)
-            # test for apps existence in Marathon
-            if self.marathon_app in apps:
-                return True
-        except KeyError:
-            self.log.error("Error: KeyError when testing for apps existence")
-            sys.exit(1)
-
-        return False
-
-    def autoscale(self, **kwargs):
-
-        min = kwargs.get("min", 0.0)
-        max = kwargs.get("max", 1.0)
-        value = kwargs.get("value", 0.0)
-
-        if min <= value <= max:
-            self.log.info("%s within thresholds" % self.trigger_mode)
-            self.scale_up = 0
-            self.cool_down = 0
-        elif value > max:
+        if direction == 1:
             self.scale_up += 1
             self.cool_down = 0
             if self.scale_up >= self.scale_up_factor:
@@ -154,7 +120,7 @@ class Autoscaler:
                 self.log.info("%s above thresholds, but waiting to exceed scale-up factor. "
                               "Consecutive cycles = %s, Scale-up factor = %s" %
                               (self.trigger_mode, self.scale_up, self.scale_up_factor))
-        elif value < min:
+        elif direction == -1:
             self.cool_down += 1
             self.scale_up = 0
             if self.cool_down >= self.cool_down_factor:
@@ -165,6 +131,10 @@ class Autoscaler:
                 self.log.info("%s below thresholds, but waiting to exceed cool-down factor. "
                               "Consecutive cycles = %s, Cool-down factor = %s" %
                               (self.trigger_mode, self.cool_down, self.cool_down_factor))
+        else:
+            self.log.info("%s within thresholds" % self.trigger_mode)
+            self.scale_up = 0
+            self.cool_down = 0
 
     def scale_app(self, is_up):
         """Scale marathon_app up or down
@@ -172,7 +142,7 @@ class Autoscaler:
             is_up(bool): Scale up if True, scale down if False
         """
         # get the number of instances running
-        app_instances = self.get_app_instances()
+        app_instances = self.marathon_app.get_app_instances()
 
         if is_up:
             target_instances = math.ceil(app_instances * self.autoscale_multiplier)
@@ -193,7 +163,7 @@ class Autoscaler:
             json_data = json.dumps(data)
             response = self.api_client.dcos_rest(
                 "put",
-                '/service/marathon/v2/apps/' + self.marathon_app,
+                '/service/marathon/v2/apps/' + self.marathon_app.app_name,
                 data=json_data
             )
             self.log.debug("scale_app response: %s", response)
@@ -202,7 +172,7 @@ class Autoscaler:
         """Set up an argument parser
         Override values of command line arguments with environment variables.
         """
-        parser = argparse.ArgumentParser(description='Marathon autoscaler app.')
+        parser = argparse.ArgumentParser(description='Marathon autoscale_examples app.')
         parser.set_defaults()
         parser.add_argument('--dcos-master',
                             help=('The DNS hostname or IP of your Marathon'
@@ -240,11 +210,11 @@ class Autoscaler:
         parser.add_argument('--min_range',
                             help=('The minimum range of the scaling modes '
                                   'dimension.'),
-                            **self.env_or_req('AS_MIN_RANGE'), type=float)
+                            **self.env_or_req('AS_MIN_RANGE'), type=str)
         parser.add_argument('--max_range',
                             help=('The maximum range of the scaling modes '
                                   'dimension'),
-                            **self.env_or_req('AS_MAX_RANGE'), type=float)
+                            **self.env_or_req('AS_MAX_RANGE'), type=str)
         parser.add_argument('-v', '--verbose', action="store_true",
                             help='Display DEBUG messages')
 
@@ -272,34 +242,32 @@ class Autoscaler:
 
     def run(self):
         """Main function
-        Runs the query - compute - act cycle
         """
         self.cool_down = 0
         self.scale_up = 0
 
         while True:
 
-            # test for apps existence in Marathon.
-            if not self.app_exists():
-                self.log.error("Could not find %s in list of apps.", self.marathon_app)
+            try:
+
+                # Test for apps existence in Marathon
+                if not self.marathon_app.app_exists():
+                    self.log.error("Could not find %s in list of apps.", self.marathon_app.app_name)
+                    self.timer()
+                    continue
+
+                # Get the mode scaling direction
+                direction = self.scaling_mode.scale_direction()
+                self.log.debug("scaling mode direction = %s", direction)
+
+                # Evaluate whether to auto-scale
+                self.autoscale(direction)
+                self.timer()
+
+            except ValueError as error:
+                self.log.error(error)
                 self.timer()
                 continue
-
-            # Get the mode dimension and value
-            min = float(self.scaling_mode.get_min())
-            max = float(self.scaling_mode.get_max())
-            value = float(self.scaling_mode.get_value())
-
-            if value == -1.0:
-                self.timer()
-                continue
-
-            # Evaluate whether to auto-scale
-            self.autoscale(
-                min=min,
-                max=max,
-                value=value)
-            self.timer()
 
 
 if __name__ == "__main__":

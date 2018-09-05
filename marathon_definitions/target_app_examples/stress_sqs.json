@@ -1,5 +1,5 @@
 {
-  "id": "/autoscaler/sqs",
+  "id": "/test/stress-sqs",
   "instances": 1,
   "cpus": 0.1,
   "mem": 128,
@@ -15,7 +15,7 @@
     "type": "DOCKER",
     "volumes": [],
     "docker": {
-      "image": "adamiezzi/marathon-autoscale",
+      "image": "adamiezzi/stress-sqs:latest",
       "portMappings": [],
       "privileged": false,
       "parameters": [],
@@ -37,19 +37,8 @@
   "portDefinitions": [],
   "requirePorts": false,
   "env": {
-    "AS_TRIGGER_MODE": "sqs",
-    "AS_MIN_INSTANCES": "1",
-    "AS_COOL_DOWN_FACTOR": "4",
-    "AS_MAX_INSTANCES": "5",
-    "AS_DCOS_MASTER": "https://leader.mesos",
-    "AS_AUTOSCALE_MULTIPLIER": "1.5",
-    "AS_SCALE_UP_FACTOR": "3",
-    "AS_MARATHON_APP": "/group1/hello-dcos",
-    "AS_INTERVAL": "30",
-    "AS_SQS_NAME": "testQueue",
-    "AS_SQS_ENDPOINT": "https://sqs.us-east-1.amazonaws.com",
-    "AS_MIN_RANGE": "3",
-    "AS_MAX_RANGE": "10",
+    "INTERVAL": "10",
+    "QUEUE_URL": "CHANGEME",
     "AWS_DEFAULT_REGION": "us-east-1",
     "AWS_ACCESS_KEY_ID": "CHANGEME",
     "AWS_SECRET_ACCESS_KEY": "CHANGEME"
