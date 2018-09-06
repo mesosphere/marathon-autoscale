@@ -32,7 +32,7 @@ class ScaleByCPUOrMemory(AbstractMode):
     def scale_direction(self):
         """
         Performs a bitwise OR on the returned direction from CPU (x)
-        and Memory (y).
+        and Memory (y). If x = -1 and y = 1, returned direction will be -1.
         """
         results = []
 

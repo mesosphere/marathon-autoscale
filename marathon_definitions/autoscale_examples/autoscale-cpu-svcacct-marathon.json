@@ -47,7 +47,7 @@
     },
     "AS_USERID": "autoscaling",
     "AS_TRIGGER_MODE": "cpu",
-    "AS_MIN_INSTANCES": "2",
+    "AS_MIN_INSTANCES": "1",
     "AS_COOL_DOWN_FACTOR": "4",
     "AS_SCALE_UP_FACTOR": "3",
     "AS_MAX_INSTANCES": "6",

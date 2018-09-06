@@ -38,7 +38,7 @@
   "requirePorts": false,
   "env": {
     "AS_TRIGGER_MODE": "mem",
-    "AS_MIN_INSTANCES": "2",
+    "AS_MIN_INSTANCES": "1",
     "AS_COOL_DOWN_FACTOR": "4",
     "AS_MAX_INSTANCES": "6",
     "AS_DCOS_MASTER": "http://leader.mesos",
