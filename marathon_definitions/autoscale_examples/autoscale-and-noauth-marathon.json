@@ -1,5 +1,5 @@
 {
-  "id": "/autoscaler/and",
+  "id": "/autoscale-and",
   "instances": 1,
   "cpus": 0.1,
   "mem": 128,
@@ -46,7 +46,7 @@
     "AS_MIN_RANGE": "40,45",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
     "AS_SCALE_UP_FACTOR": "3",
-    "AS_MARATHON_APP": "tweeter",
+    "AS_MARATHON_APP": "/test/stress-cpu",
     "AS_INTERVAL": "30"
   }
 }

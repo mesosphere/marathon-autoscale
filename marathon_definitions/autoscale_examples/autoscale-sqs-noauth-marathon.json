@@ -1,5 +1,5 @@
 {
-  "id": "/autoscaler/sqs",
+  "id": "/autoscale-sqs",
   "instances": 1,
   "cpus": 0.1,
   "mem": 128,
@@ -44,7 +44,7 @@
     "AS_DCOS_MASTER": "https://leader.mesos",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
     "AS_SCALE_UP_FACTOR": "3",
-    "AS_MARATHON_APP": "/group1/hello-dcos",
+    "AS_MARATHON_APP": "/test/stress-sqs",
     "AS_INTERVAL": "30",
     "AS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/ACCOUNT_NUMBER/test-auto-scale",
     "AS_MIN_RANGE": "3",
