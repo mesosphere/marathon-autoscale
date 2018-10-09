@@ -1,8 +1,0 @@
-export AS_USERID=some-user-id
-export AS_PASSWORD=some-password
-# -or-
-export AS_SECRET=dc-os-secret-formatted-json
-
-python3 marathon_autoscaler.py --dcos-master https://leader.mesos --max_mem_percent 60 --max_cpu_time 30 --min_mem_percent 15 --min_cpu_time 10 --trigger_mode or --autoscale_multiplier 2 --max_instances 10 --marathon-app abctest --min_instances 2 --cool-down-factor 1 --trigger_number 1 --interval 15
-
-python3 marathon_autoscaler.py --dcos-master https://leader.mesos --max_mem_percent 60 --max_cpu_time 30 --min_mem_percent 15 --min_cpu_time 10 --trigger_mode or --autoscale_multiplier 2 --max_instances 10 --marathon-app abctest --min_instances 2 --cool-down-factor 1 --trigger_number 1 --interval 15 --verbose
