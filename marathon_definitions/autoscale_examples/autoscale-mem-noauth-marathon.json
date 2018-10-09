@@ -1,5 +1,5 @@
 {
-  "id": "/autoscaler/mem",
+  "id": "/autoscale-mem",
   "instances": 1,
   "cpus": 0.1,
   "mem": 128,
@@ -38,15 +38,15 @@
   "requirePorts": false,
   "env": {
     "AS_TRIGGER_MODE": "mem",
-    "AS_MIN_INSTANCES": "2",
+    "AS_MIN_INSTANCES": "1",
     "AS_COOL_DOWN_FACTOR": "4",
     "AS_MAX_INSTANCES": "6",
-    "AS_DCOS_MASTER": "https://leader.mesos",
+    "AS_DCOS_MASTER": "http://leader.mesos",
     "AS_MAX_RANGE": "80",
     "AS_MIN_RANGE": "45",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
     "AS_SCALE_UP_FACTOR": "3",
-    "AS_MARATHON_APP": "tweeter",
+    "AS_MARATHON_APP": "/test/stress-memory",
     "AS_INTERVAL": "30"
   }
 }

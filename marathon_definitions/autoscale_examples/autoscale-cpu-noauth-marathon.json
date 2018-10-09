@@ -1,5 +1,5 @@
 {
-  "id": "/autoscaler/cpu",
+  "id": "/autoscale-cpu",
   "instances": 1,
   "cpus": 0.1,
   "mem": 128,
@@ -40,13 +40,13 @@
     "AS_TRIGGER_MODE": "cpu",
     "AS_MIN_INSTANCES": "2",
     "AS_COOL_DOWN_FACTOR": "4",
+    "AS_SCALE_UP_FACTOR": "3",
     "AS_MAX_INSTANCES": "6",
-    "AS_DCOS_MASTER": "https://leader.mesos",
+    "AS_DCOS_MASTER": "http://leader.mesos",
     "AS_MAX_RANGE": "80",
     "AS_MIN_RANGE": "55",
     "AS_AUTOSCALE_MULTIPLIER": "1.5",
-    "AS_TRIGGER_NUMBER": "3",
-    "AS_MARATHON_APP": "tweeter",
+    "AS_MARATHON_APP": "/test/stress-cpu",
     "AS_INTERVAL": "30"
   }
 }
