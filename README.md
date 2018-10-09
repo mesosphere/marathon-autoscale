@@ -12,19 +12,36 @@ If running on a DC/OS cluster in Permissive or Strict mode, an user or service a
 ### Building the Docker container
 
 How to build the container:
-    
-    docker build .
-    docker tag <tag-id> <docker-hub-name>/marathon-autoscale:latest
-    docker push <docker-hub-name>/marathon-autoscale:latest
+
+    image_name="mesosphere/marathon-autoscale" make
+    image_name="mesosphere/marathon-autoscale" make push
+
+There is also a image available at docker hub for [mesosphere/marathon-autoscaler](https://hub.docker.com/r/mesosphere/marathon-autoscaler/)
 
 ### (Optional) Creating a service account
 
-The create_service_account.sh script takes two parameters: 
+The create_service_account.sh script takes two parameters:
 
     Service-Account-Name #the name of the service account you want to create
     Namespace-Path #the path to launch this service under marathon management.  e.g. / or /dev
 
     $ ./create-service-account.sh [service-account-name] [namespace-path]
+
+### Install from the DC/OS Catalog
+
+The marathon-autoscaler can be installed as a service from the DC/OS catalog with `dcos package install marathon-autoscaler`.  There is no default installation for this service.  The autoscaler needs to know a number of things in order to scale an application.   The DC/OS package install process for this service requires a configuration options during installation.   Assuming a simple `/sleep` application running in Marathon and the following config.json file:
+
+```
+{
+  "autoscaler": {
+    "marathon-app" : "/sleepy",
+    "userid": "agent-99",
+    "password": "secret"
+  }
+}
+```
+
+All the configurations listed below are available to be changed via the config.json file.   The default name of this service is ${marathon-app}-autoscaler in this case, the service is `/sleepy-autoscaler`.
 
 ### Marathon examples
 
@@ -46,7 +63,7 @@ Core environment variables available to the application:
     AS_SCALE_UP_FACTOR # how many times should we poll before scaling up
     AS_INTERVAL #how often should we poll in seconds
 
-**Notes** 
+**Notes**
 
 If you are using an authentication:
 
@@ -64,12 +81,12 @@ If you are using Memory as your scaling mode:
 
     AS_MAX_RANGE # max avg mem utilization percent as float, e.g. 75 or 75.0
     AS_MIN_RANGE # min avg mem utilization percent as float, e.g. 55 or 55.0
-    
+
 If you are using AND (CPU and Memory) as your scaling mode:
 
     AS_MAX_RANGE # [max average cpu time, max avg mem utilization percent], e.g. 75.0,80.0
     AS_MIN_RANGE # [min average cpu time, min avg men utilization percent], e.g. 55.0,55.0
-    
+
 If you are using OR (CPU or Memory) as your scaling mode:
 
     AS_MAX_RANGE # [max average cpu time, max avg mem utilization percent], e.g. 75.0,80.0
@@ -104,11 +121,11 @@ Verify the app is added with the command `$ dcos marathon app list`
 
 ## Scaling Modes
 
-#### CPU 
+#### CPU
 
 In this mode, the system will scale the service up or down when the CPU has been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down). For AS_MIN_RANGE and AS_MAX_RANGE on multicore containers, the calculation for determining the value is # of CPU * desired CPU utilization percentage = CPU time (e.g. 80 cpu time * 2 cpu = 160 cpu time)
 
-#### MEM 
+#### MEM
 
 In this mode, the system will scale the service up or down when the Memory has been out of range for the number of cycles defined in AS_SCALE_UP_FACTOR (for up) or AS_COOL_DOWN_FACTOR (for down). For AS_MIN_RANGE and AS_MAX_RANGE on very small containers, remember that Mesos adds 32MB to the container spec for container overhead (namespace and cgroup), so your target percentages should take that into account.  Alternatively, consider using the CPU only scaling mode for containers with very small memory footprints.
 
