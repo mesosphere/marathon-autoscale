@@ -10,8 +10,9 @@ from autoscaler.modes.abstractmode import AbstractMode
 
 class ScaleBySQS(AbstractMode):
 
-    def __init__(self, api_client=None, app=None, dimension=None):
-        super().__init__(api_client, app, dimension)
+    def __init__(self, api_client=None, agent_stats=None, app=None,
+                 dimension=None):
+        super().__init__(api_client, agent_stats, app, dimension)
 
         # Override the boto logging level to something less chatty
         logger = logging.getLogger('botocore.vendored.requests')
@@ -22,7 +23,7 @@ class ScaleBySQS(AbstractMode):
             self.log.error("AS_QUEUE_URL env var is not set.")
             sys.exit(1)
 
-        """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, 
+        """Boto3 will use the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
         and AWS_DEFAULT_REGION env vars as it's credentials
         """
         self.sqs = client('sqs')

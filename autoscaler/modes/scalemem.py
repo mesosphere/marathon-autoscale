@@ -1,11 +1,11 @@
-
 from autoscaler.modes.abstractmode import AbstractMode
 
 
 class ScaleByMemory(AbstractMode):
 
-    def __init__(self, api_client=None, app=None, dimension=None):
-        super().__init__(api_client, app, dimension)
+    def __init__(self, api_client=None, agent_stats=None, app=None,
+                 dimension=None):
+        super().__init__(api_client, agent_stats, app, dimension)
 
     def get_value(self):
 
@@ -49,7 +49,7 @@ class ScaleByMemory(AbstractMode):
     def get_mem_usage(self, task, agent):
         """Calculate memory usage for the task on the given agent
         """
-        task_stats = self.app.get_task_agent_stats(task, agent)
+        task_stats = self.agent_stats.get_task_stats(agent, task)
 
         # RAM usage
         if task_stats is not None:

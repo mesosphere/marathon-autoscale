@@ -4,11 +4,13 @@ import logging
 
 class AbstractMode(ABC):
 
-    def __init__(self, api_client=None, app=None, dimension=None):
+    def __init__(self, api_client=None, agent_stats=None, app=None,
+                 dimension=None):
 
         super().__init__()
 
         self.api_client = api_client
+        self.agent_stats = agent_stats
         self.app = app
         self.min_range = 0.0
         self.max_range = 100.0

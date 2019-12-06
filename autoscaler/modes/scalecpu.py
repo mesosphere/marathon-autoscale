@@ -5,8 +5,9 @@ from autoscaler.modes.abstractmode import AbstractMode
 
 class ScaleByCPU(AbstractMode):
 
-    def __init__(self, api_client=None, app=None, dimension=None):
-        super().__init__(api_client, app, dimension)
+    def __init__(self, api_client=None, agent_stats=None, app=None,
+                 dimension=None):
+        super().__init__(api_client, agent_stats, app, dimension)
 
     def get_value(self):
         """Get the approximate number of visible messages in a SQS queue
@@ -54,7 +55,7 @@ class ScaleByCPU(AbstractMode):
         timestamp = []
 
         for i in range(2):
-            task_stats = self.app.get_task_agent_stats(task, agent)
+            task_stats = self.agent_stats.get_task_stats(agent, task, i)
             if task_stats is not None:
                 cpu_sys_time.insert(i, float(task_stats['cpus_system_time_secs']))
                 cpu_user_time.insert(i, float(task_stats['cpus_user_time_secs']))

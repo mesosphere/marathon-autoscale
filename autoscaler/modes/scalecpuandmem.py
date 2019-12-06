@@ -7,8 +7,9 @@ from autoscaler.modes.scalemem import ScaleByMemory
 
 class ScaleByCPUAndMemory(AbstractMode):
 
-    def __init__(self,  api_client=None, app=None, dimension=None):
-        super().__init__(api_client, app)
+    def __init__(self,  api_client=None, agent_stats=None, app=None,
+                 dimension=None):
+        super().__init__(api_client, agent_stats, app)
         self.mode_map = {'cpu': ScaleByCPU, 'mem': ScaleByMemory}
 
         if len(dimension['min']) < 2 or len(dimension['max']) < 2:
@@ -46,4 +47,3 @@ class ScaleByCPUAndMemory(AbstractMode):
             return results[0]
         else:
             return 0
-
