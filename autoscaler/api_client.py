@@ -10,7 +10,6 @@ import time
 class APIClient:
 
     DCOS_CA = 'dcos-ca.crt'
-    ERR_THRESHOLD = 10
 
     def __init__(self, dcos_master):
         self.dcos_master = dcos_master
@@ -78,7 +77,7 @@ class APIClient:
         result = response.json()
 
         if 'token' not in result:
-            sys.stderr.write("Unable to authenticate or renew JWT token: %s", result)
+            self.log.error("Unable to authenticate or renew JWT token: %s", result)
             sys.exit(1)
 
         self.dcos_headers = {
@@ -86,7 +85,7 @@ class APIClient:
             'Content-type': 'application/json'
         }
 
-    def dcos_rest(self, method, path, data=None):
+    def dcos_rest(self, method, path, data=None, auth=True):
         """Common querying procedure that handles 401 errors
         Args:
             method (str): HTTP method (get or put)
@@ -94,56 +93,43 @@ class APIClient:
         Returns:
             JSON requests.response.content result of the query
         """
-        err_num = 0
-        done = False
+        try:
+            if data is None:
+                response = requests.request(
+                    method,
+                    self.dcos_master + path,
+                    headers=self.dcos_headers,
+                    verify=False
+                )
+            else:
+                response = requests.request(
+                    method,
+                    self.dcos_master + path,
+                    headers=self.dcos_headers,
+                    data=data,
+                    verify=False
+                )
 
-        while not done:
-            try:
-                if data is None:
-                    response = requests.request(
-                        method,
-                        self.dcos_master + path,
-                        headers=self.dcos_headers,
-                        verify=False
-                    )
+            self.log.debug("%s %s %s", method, path, response.status_code)
+
+            if response.status_code != 200:
+                if response.status_code == 401 and auth:
+                    self.log.info("Token expired. Re-authenticating to DC/OS")
+                    self.authenticate()
+                    return self.dcos_rest(method, path, data=data, auth=False)
                 else:
-                    response = requests.request(
-                        method,
-                        self.dcos_master + path,
-                        headers=self.dcos_headers,
-                        data=data,
-                        verify=False
-                    )
+                    response.raise_for_status()
 
-                self.log.debug("%s %s %s", method, path, response.status_code)
-                done = True
+            content = response.content.strip()
+            if not content:
+                content = "{}"
 
-                if response.status_code != 200:
-                    if response.status_code == 401:
-                        self.log.info("Token expired. Re-authenticating to DC/OS")
-                        self.authenticate()
-                        done = False
-                        continue
-                    else:
-                        response.raise_for_status()
+            result = json.loads(content)
+            return result
 
-                content = response.content.strip()
-                if not content:
-                    content = "{}"
-
-                result = json.loads(content)
-
-                return result
-
-            except requests.exceptions.HTTPError as http_err:
-                done = False
-                self.log.error("HTTP Error: %s", http_err)
-            except json.JSONDecodeError as dec_err:
-                done = False
-                err_num += 1
-                time.sleep(10)
-                self.log.error("Non JSON result returned: %s", dec_err)
-                if err_num > self.ERR_THRESHOLD:
-                    self.log.error("FATAL: Threshold of JSON parsing errors "
-                                   "exceeded. Shutting down.")
-                    sys.exit(1)
+        except requests.exceptions.HTTPError as e:
+            self.log.error("HTTP Error: %s", e)
+            raise
+        except Exception as e:
+            self.log.error("Error: %s", e)
+            raise

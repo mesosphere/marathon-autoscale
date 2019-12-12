@@ -7,6 +7,7 @@ import math
 import argparse
 import urllib3
 
+from autoscaler.agent_stats import AgentStats
 from autoscaler.api_client import APIClient
 from autoscaler.app import MarathonApp
 from autoscaler.modes.scalecpu import ScaleByCPU
@@ -75,9 +76,15 @@ class Autoscaler:
         # Initialize marathon client for auth requests
         self.api_client = APIClient(self.dcos_master)
 
+        # Initialize agent statistics fetcher and keeper
+        self.agent_stats = AgentStats(self.api_client)
+
         # Instantiate the Marathon app class
+        app_name = args.marathon_app
+        if not app_name.startswith('/'):
+            app_name = '/' + app_name
         self.marathon_app = MarathonApp(
-            app_name=args.marathon_app,
+            app_name=app_name,
             api_client=self.api_client
         )
 
@@ -93,8 +100,9 @@ class Autoscaler:
 
         self.scaling_mode = self.MODES[self.trigger_mode](
             api_client=self.api_client,
+            agent_stats=self.agent_stats,
             app=self.marathon_app,
-            dimension=dimension
+            dimension=dimension,
         )
 
     def timer(self):
@@ -163,7 +171,7 @@ class Autoscaler:
             json_data = json.dumps(data)
             response = self.api_client.dcos_rest(
                 "put",
-                '/service/marathon/v2/apps/' + self.marathon_app.app_name,
+                '/service/marathon/v2/apps' + self.marathon_app.app_name,
                 data=json_data
             )
             self.log.debug("scale_app response: %s", response)
@@ -249,11 +257,12 @@ class Autoscaler:
         while True:
 
             try:
+                self.agent_stats.reset()
 
                 # Test for apps existence in Marathon
                 if not self.marathon_app.app_exists():
-                    self.log.error("Could not find %s in list of apps.", self.marathon_app.app_name)
-                    self.timer()
+                    self.log.error("Could not find %s in list of apps.",
+                                   self.marathon_app.app_name)
                     continue
 
                 # Get the mode scaling direction
@@ -262,12 +271,11 @@ class Autoscaler:
 
                 # Evaluate whether to auto-scale
                 self.autoscale(direction)
-                self.timer()
 
-            except ValueError as error:
-                self.log.error(error)
+            except Exception as e:
+                self.log.exception(e)
+            finally:
                 self.timer()
-                continue
 
 
 if __name__ == "__main__":
