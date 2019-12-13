@@ -1,4 +1,4 @@
-requests
+requests>=2.22.0
 PyJWT
 cryptography
 urllib3
