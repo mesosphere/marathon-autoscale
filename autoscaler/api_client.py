@@ -13,7 +13,10 @@ class APIClient:
 
     def __init__(self, dcos_master):
         self.dcos_master = dcos_master
-        self.dcos_headers = {}
+        self.dcos_headers = {
+            'User-Agent': 'marathon-autoscale',
+            'Content-type': 'application/json'
+        }
         self.authenticate()
         self.log = logging.getLogger("autoscale")
 
@@ -21,7 +24,7 @@ class APIClient:
         """Using a userid/pass or a service account secret,
         get or renew JWT auth token
         Returns:
-            Sets dcos_headers to be used for authentication
+            Updates dcos_headers to be used for authentication
         """
 
         # Get the cert authority
@@ -29,6 +32,7 @@ class APIClient:
 
             response = requests.get(
                 self.dcos_master + '/ca/dcos-ca.crt',
+                headers=self.dcos_headers,
                 verify=False
             )
             with open(self.DCOS_CA, "wb") as crt_file:
@@ -63,13 +67,12 @@ class APIClient:
 
         # No authentication
         else:
-            self.dcos_headers = {'Content-type': 'application/json'}
             return
 
         # Create or renew auth token for the service account
         response = requests.post(
             self.dcos_master + "/acs/api/v1/auth/login",
-            headers={"Content-type": "application/json"},
+            headers=self.dcos_headers,
             data=auth_data,
             verify=self.DCOS_CA
         )
@@ -80,10 +83,9 @@ class APIClient:
             self.log.error("Unable to authenticate or renew JWT token: %s", result)
             sys.exit(1)
 
-        self.dcos_headers = {
-            'Authorization': 'token=' + result['token'],
-            'Content-type': 'application/json'
-        }
+        self.dcos_headers.update({
+            'Authorization': 'token=' + result['token']
+        })
 
     def dcos_rest(self, method, path, data=None, auth=True):
         """Common querying procedure that handles 401 errors
